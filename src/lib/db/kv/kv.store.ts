@@ -6,4 +6,12 @@ export class KVStore {
     constructor(private prefix: string) {
         this.table = new KVTable(prefix);
     }
+
+    commit() {
+        this.table.commit();
+    }
+
+    rollback() {
+        this.table.rollback();
+    }
 }

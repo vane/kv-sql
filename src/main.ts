@@ -1,11 +1,11 @@
 import './style.css'
 import {SQLDb} from "./lib/db/sql.db";
-import {sqliteTestData} from "./test/sqlite.test.data";
+import {sqliteCreateTableTestData, sqliteTestData} from "./test/sqlite.test.data";
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `<div style="display: flex;flex-direction: column;width: 420px">
   <div><h1>Execute SQL</h1></div>
   <div>
     <textarea id="sql-query" rows="20" cols="50">
-    ${sqliteTestData}
+    ${sqliteCreateTableTestData}
     </textarea>
   </div>
   <div>
@@ -23,3 +23,4 @@ btn.addEventListener('click',  async () => {
     await db.execute(q)
     btn.removeAttribute('disabled')
 });
+db.execute(txt.value)

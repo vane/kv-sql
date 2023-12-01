@@ -1,4 +1,11 @@
 // data exported from https://www.sqlitetutorial.net/sqlite-sample-database/
+export const sqliteCreateTableTestData = `CREATE TABLE IF NOT EXISTS "albums" (
+    "AlbumId" INTEGER NOT NULL,
+    "Title" NVARCHAR(160) NOT NULL,
+    "ArtistId" INTEGER NOT NULL,
+    FOREIGN KEY("ArtistId") REFERENCES "artists"("ArtistId") ON DELETE NO ACTION ON UPDATE NO ACTION,
+    PRIMARY KEY("AlbumId" AUTOINCREMENT)
+);`
 export const sqliteTestData = `
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "albums" (
