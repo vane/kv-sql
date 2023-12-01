@@ -1,11 +1,11 @@
 import './style.css'
 import {SQLDb} from "./lib/db/sql.db";
-import {sqliteCreateTableTestData, sqliteTestData} from "./test/sqlite.test.data";
+import {sqliteTestData} from "./test/sqlite.test.data";
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `<div style="display: flex;flex-direction: column;width: 420px">
   <div><h1>Execute SQL</h1></div>
   <div>
     <textarea id="sql-query" rows="20" cols="50">
-    ${sqliteCreateTableTestData}
+    ${sqliteTestData}
     </textarea>
   </div>
   <div>
@@ -21,7 +21,9 @@ btn.addEventListener('click',  async () => {
     btn.setAttribute('disabled', 'disabled')
     try {
         const q = txt.value;
+        const dt = Date.now();
         await db.execute(q)
+        console.log('db.execute in', Date.now() - dt);
     } catch (e) {
         alert(e.message);
     } finally {
@@ -29,4 +31,5 @@ btn.addEventListener('click',  async () => {
     }
 
 });
-db.execute(txt.value)
+// for debug purposes
+window.db = db;

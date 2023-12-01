@@ -1,0 +1,16 @@
+import {KVStore} from "../kv/kv.store";
+import {Logger} from "../../logger";
+import {DBError, DBErrorType} from "../db.error";
+
+export const insertStmt = (q, kv: KVStore) => {
+    switch (q.into.variant) {
+        case 'table': {
+            kv.op.insertTable(q.into.name, q.result);
+            break
+        }
+        default: {
+            Logger.warn('insertStmt', q);
+            throw new DBError(DBErrorType.NOT_IMPLEMENTED, `insertStmt ${q.into.variant}`)
+        }
+    }
+}

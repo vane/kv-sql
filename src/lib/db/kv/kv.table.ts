@@ -11,11 +11,11 @@ import {
     VariantDefinition,
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
-import {KVTableCol, KVTableCons, KVTableConsFk, KVTableConsPk, KVTables} from "./kv.model";
+import {KVTableCol, KVTableCons, KVTableConsFk, KVTableConsPk, KVTableDef, KVTables} from "./kv.model";
 
 
 export class KVTable {
-    private td: KVTables;
+    td: KVTables;
     private readonly tdPrefix: string;
 
     constructor(private prefix: string) {
@@ -31,8 +31,16 @@ export class KVTable {
     add(name: string, cols: Column[]) {
         Logger.log('KVTable.add', name, cols);
         ++this.td.id;
-        this.td.defs[name] = {id: this.td.id, cons: {defs: {}}, cols: {}};
-        this.createTable(name, cols);
+        const def: KVTableDef = {
+            id: this.td.id,
+            name,
+            conid: 0,
+            colid: 0,
+            cons: {defs: {}},
+            cols: {}
+        }
+        this.td.defs[name] = def
+        this.createTable(def, cols);
     }
 
     commit() {
@@ -57,35 +65,33 @@ export class KVTable {
         return JSON.parse(td);
     }
 
-    private createTable(name: string, cols: CVariant[]) {
-        let id = 0;
-        let cid = 0;
+    private createTable(def: KVTableDef, cols: CVariant[]) {
         for (let col of cols) {
             switch (col.variant) {
                 case VariantDefinition.column: {
-                    ++id;
-                    const c = this.createColumn(col as Column, id);
-                    this.td.defs[name].cols[c.name] = c;
+                    ++def.colid;
+                    const c = this.createColumn(col as Column, def.colid);
+                    def.cols[c.name] = c;
                     break;
                 }
                 case VariantDefinition.constraint: {
-                    ++cid;
-                    const c = this.createConstraint(col as Constraint, cid);
+                    ++def.conid;
+                    const c = this.createConstraint(col as Constraint, def.conid);
                     if (!c) {
                         Logger.warn('KVTable.createTable.createConstraint empty', col);
                         break;
                     }
                     if (c.pk) {
                         // check if pk exists
-                        if (this.td.defs[name].cons.pk)
-                            throw new DBError(DBErrorType.PK_EXISTS, this.td.defs[name].cons.pk);
-                        this.td.defs[name].cons.pk = c.name;
+                        if (def.cons.pk)
+                            throw new DBError(DBErrorType.PK_EXISTS, def.cons.pk);
+                        def.cons.pk = c.name;
                     }
                     // check if fk exists
-                    if (this.td.defs[name].cons.defs[c.name]) {
-                        throw new DBError(DBErrorType.FK_EXISTS, this.td.defs[name].cons.defs[c.name].name);
+                    if (def.cons.defs[c.name]) {
+                        throw new DBError(DBErrorType.FK_EXISTS, def.cons.defs[c.name].name);
                     }
-                    this.td.defs[name].cons.defs[c.name] = c;
+                    def.cons.defs[c.name] = c;
                     break;
                 }
                 default: {
@@ -146,7 +152,8 @@ export class KVTable {
                     fk = this.createForeignKey(def);
                     break;
                 case ConstraintDefinitionVariant.pk:
-                    pk = {auto: !!def.autoIncrement}
+                    const auto = !!def.autoIncrement;
+                    pk = {id: auto ? '1' : undefined, auto}
                     break;
                 default: {
                     Logger.debug('createConstraint.def', cons, def);

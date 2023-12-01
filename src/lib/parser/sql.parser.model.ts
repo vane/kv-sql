@@ -106,6 +106,43 @@ export interface Column extends CVariant {
     definition: ColumnDefinition[];
 }
 
+//////////////////////////
+// TABLE
+//////////////////////////
 export interface Table {
     cols: Column|Constraint[]
+}
+
+//////////////////////////
+// INSERT
+//////////////////////////
+
+export enum InsertResultVariant {
+    list = 'list'
+}
+
+export enum InsertResultType {
+    expression = 'expression'
+}
+
+export enum InsertDataType {
+    literal = 'literal'
+}
+
+export enum InsertExpressionVariant {
+    decimal= 'decimal',
+    text = 'text',
+    null = 'null'
+}
+
+export interface InsertResultExpression {
+    type: InsertDataType;
+    variant: InsertExpressionVariant;
+    value: string;
+}
+
+export interface InsertResult {
+    type: InsertResultType;
+    variant: InsertResultVariant;
+    expression: InsertResultExpression[];
 }
