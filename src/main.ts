@@ -19,8 +19,14 @@ const btn = document.getElementById('sql-run');
 const txt = document.getElementById('sql-query') as HTMLTextAreaElement
 btn.addEventListener('click',  async () => {
     btn.setAttribute('disabled', 'disabled')
-    const q = txt.value;
-    await db.execute(q)
-    btn.removeAttribute('disabled')
+    try {
+        const q = txt.value;
+        await db.execute(q)
+    } catch (e) {
+        alert(e.message);
+    } finally {
+        btn.removeAttribute('disabled')
+    }
+
 });
 db.execute(txt.value)
