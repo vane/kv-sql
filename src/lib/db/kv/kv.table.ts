@@ -11,53 +11,11 @@ import {
     VariantDefinition,
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
+import {KVTableCol, KVTableConst, KVTables} from "./kv.model";
 
-interface TConst {
-    id : number;
-    pk: boolean;
-    fk: boolean;
-    cname?: string[];
-    name: string;
-    /** @deprecated */
-    cons: Constraint;
-}
-
-interface TConsts {
-    pk?: string;
-    defs: TConst[]
-}
-
-interface TCol {
-    id: number;
-    name: string;
-    type: DatatypeVariant;
-    notNull: boolean;
-    /** @deprecated */
-    col: Column;
-}
-
-interface TCols {
-    [key: string]: TCol
-}
-
-interface TDef {
-    id: number;
-    cons: TConsts;
-    cols: TCols;
-}
-
-interface TDefs {
-    [key: string]: TDef
-}
-
-interface TD {
-    id: number;
-    defs: TDefs;
-    [key: string]: any
-}
 
 export class KVTable {
-    private td: TD;
+    private td: KVTables;
     private readonly tdPrefix: string;
 
     constructor(private prefix: string) {
@@ -89,7 +47,7 @@ export class KVTable {
         return this.td;
     }
 
-    private loadTd(): TD {
+    private loadTd(): KVTables {
         const td = localStorage.getItem(this.tdPrefix)
         // initial value
         if (!td) return {
@@ -129,7 +87,7 @@ export class KVTable {
         }
     }
 
-    private createColumn(col: Column, id: number):TCol  {
+    private createColumn(col: Column, id: number):KVTableCol  {
         switch (col.datatype.variant) {
             case DatatypeVariant.datetime:
             case DatatypeVariant.integer:
@@ -156,7 +114,7 @@ export class KVTable {
         return {id, type: col.datatype.variant, name: col.name, notNull, col};
     }
 
-    private createConstraint(cons: Constraint, id: number): TConst {
+    private createConstraint(cons: Constraint, id: number): KVTableConst {
         Logger.log('createConstraint', cons);
         let pk = false;
         let fk = false;
