@@ -3,15 +3,15 @@ import {KvConstraints} from "./kv.constraints";
 import {
     Column,
     ColumnDefinitionVariant,
-    Constraint,
-    ConstraintColumnVariant,
+    Constraint, ConstraintAction,
+    ConstraintColumnVariant, ConstraintDefinition,
     ConstraintDefinitionVariant,
     CVariant,
     DatatypeVariant,
     VariantDefinition,
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
-import {KVTableCol, KVTableConst, KVTables} from "./kv.model";
+import {KVTableCol, KVTableCons, KVTableConsFk, KVTableConsPk, KVTables} from "./kv.model";
 
 
 export class KVTable {
@@ -31,7 +31,7 @@ export class KVTable {
     add(name: string, cols: Column[]) {
         Logger.log('KVTable.add', name, cols);
         ++this.td.id;
-        this.td.defs[name] = {id: this.td.id, cons: {defs: []}, cols: {}};
+        this.td.defs[name] = {id: this.td.id, cons: {defs: {}}, cols: {}};
         this.createTable(name, cols);
     }
 
@@ -71,12 +71,21 @@ export class KVTable {
                 case VariantDefinition.constraint: {
                     ++cid;
                     const c = this.createConstraint(col as Constraint, cid);
+                    if (!c) {
+                        Logger.warn('KVTable.createTable.createConstraint empty', col);
+                        break;
+                    }
                     if (c.pk) {
-                        if (this.td.defs[name].cons.pk) throw new DBError(DBErrorType.PK_EXISTS, this.td.defs[name].cons.pk);
+                        // check if pk exists
+                        if (this.td.defs[name].cons.pk)
+                            throw new DBError(DBErrorType.PK_EXISTS, this.td.defs[name].cons.pk);
                         this.td.defs[name].cons.pk = c.name;
                     }
-                    // todo validate if exists
-                    this.td.defs[name].cons.defs.push(c);
+                    // check if fk exists
+                    if (this.td.defs[name].cons.defs[c.name]) {
+                        throw new DBError(DBErrorType.FK_EXISTS, this.td.defs[name].cons.defs[c.name].name);
+                    }
+                    this.td.defs[name].cons.defs[c.name] = c;
                     break;
                 }
                 default: {
@@ -111,13 +120,12 @@ export class KVTable {
                 }
             }
         }
-        return {id, type: col.datatype.variant, name: col.name, notNull, col};
+        return {id, type: col.datatype.variant, name: col.name, notNull};
     }
 
-    private createConstraint(cons: Constraint, id: number): KVTableConst {
-        Logger.log('createConstraint', cons);
-        let pk = false;
-        let fk = false;
+    private createConstraint(cons: Constraint, id: number): KVTableCons|undefined {
+        let pk: KVTableConsPk|undefined = undefined;
+        let fk: KVTableConsFk|undefined = undefined;
         let name = cons.name;
         let cname = [];
         for (let col of cons.columns) {
@@ -135,10 +143,10 @@ export class KVTable {
         for (let def of cons.definition) {
             switch (def.variant) {
                 case ConstraintDefinitionVariant.fk:
-                    fk = true;
+                    fk = this.createForeignKey(def);
                     break;
                 case ConstraintDefinitionVariant.pk:
-                    pk = true;
+                    pk = {auto: !!def.autoIncrement}
                     break;
                 default: {
                     Logger.debug('createConstraint.def', cons, def);
@@ -156,6 +164,21 @@ export class KVTable {
         } else {
             Logger.warn('KVTable.createConstraint', cons, name, {fk, pk, name, cname, cons});
         }
-        return {id, fk, pk, name, cname, cons}
+        return {id, fk, pk, name, cname}
+    }
+
+    private createForeignKey(def: ConstraintDefinition): KVTableConsFk|undefined {
+        if (!def.action || !def.references) return undefined;
+        const fk = {};
+        for (const act of def.action) {
+            switch (act.action) {
+                case ConstraintAction.no_action:
+                    break;
+                default:
+                    Logger.debug('createForeignKey.action', def, act);
+                    throw new DBError(DBErrorType.NOT_IMPLEMENTED, act.action)
+            }
+        }
+        return fk;
     }
 }

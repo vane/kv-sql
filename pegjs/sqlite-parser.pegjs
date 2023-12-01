@@ -2216,7 +2216,7 @@ foreign_action_on
   {
     return {
       'type': 'action',
-      'variant': keyNode(m),
+      'variant': keyNode(a),
       'action': keyNode(n)
     };
   }

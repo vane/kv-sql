@@ -1397,7 +1397,7 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$c360 = function(m: any, a: any, n: any): any {
       return {
         'type': 'action',
-        'variant': keyNode(m),
+        'variant': keyNode(a),
         'action': keyNode(n)
       };
     };

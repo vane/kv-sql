@@ -7,13 +7,35 @@ export enum ConstraintDefinitionVariant {
     pk = 'primary key'
 }
 
-export enum ConstraintDefinitionVariant {
-    not_null = 'not null',
+export enum ConstraintAction {
+    no_action = 'no action'
+}
+
+export enum ConstraintActionVariant {
+    delete = 'delete',
+    update = 'update'
+}
+
+export interface ConstraintDefinitionAction {
+    type: string;
+    variant: ConstraintActionVariant;
+    action: ConstraintAction;
+}
+
+export interface ConstraintDefinitionReference {
+    format: string;
+    name: string;
+    type: string;
+    variant: string;
+    columns: ConstraintColumn[];
 }
 
 export interface ConstraintDefinition {
     type: ConstraintDefinitionVariant;
     variant: ConstraintDefinitionVariant;
+    autoIncrement?: boolean;
+    action?: ConstraintDefinitionAction[];
+    references?: ConstraintDefinitionReference;
 }
 
 export enum ConstraintColumnType {
