@@ -36,7 +36,8 @@ export class KVTable {
             conid: 0,
             colid: 0,
             cons: {defs: {}, pk: {auto: false}},
-            cols: {}
+            cols: {},
+            idx: []
         }
         this.td.defs[name] = def
         this.createTable(def, cols);
@@ -59,7 +60,7 @@ export class KVTable {
         // initial value
         if (!td) return {
             id: 0,
-            defs: {}
+            defs: {},
         };
         return JSON.parse(td);
     }
@@ -72,6 +73,7 @@ export class KVTable {
                     ++def.colid;
                     const c = this.createColumn(col as Column, def.colid);
                     def.cols[c.name] = c;
+                    def.idx.push(c.name)
                     break;
                 }
                 case VariantDefinition.constraint: {

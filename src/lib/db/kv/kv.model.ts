@@ -40,6 +40,7 @@ export interface KVTableDef {
     colid: number;
     cons: KVTableConsMap;
     cols: {[key: string]: KVTableCol};
+    idx: string[];
 }
 
 export interface KVTables {

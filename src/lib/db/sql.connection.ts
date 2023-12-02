@@ -25,17 +25,21 @@ export class SQLConnection {
         if (ast.type !== 'statement' || ast.variant !== 'list') throw new DBError(DBErrorType.NOT_IMPLEMENTED);
 
         Benchmark.start('SQLConnection.executeStmt');
+        this.kv.begin()
+        const res = []
         for (const stmt of ast.statement) {
-            await this.executeStmt(stmt);
+            const r = await this.executeStmt(stmt);
+            res.push(r)
         }
-        Benchmark.stop('SQLConnection.executeStmt', `insert ${ast.statement.length} rows`);
+        Benchmark.stop('SQLConnection.executeStmt', `${ast.statement.length} rows`);
 
         Benchmark.start('kv.commit');
         this.kv.commit()
         Benchmark.stop('kv.commit');
+        return res
     }
 
-    private executeStmt(q: any) {
+    private executeStmt(q: any): any {
         switch (q.variant) {
             case 'transaction': {
                 return this.resolveTx(q);
@@ -54,6 +58,7 @@ export class SQLConnection {
                 Logger.warn(`Unsupported statement type ${q.variant}`, q)
             }
         }
+        return undefined;
     }
 
     private resolveTx(q: any) {

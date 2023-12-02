@@ -55,7 +55,7 @@
   }
 
   function keyNode(node) {
-    return textNode(node).toLowerCase();
+    return textNode(node);
   }
 
   function isArrayOkay(arr) {

@@ -12,7 +12,7 @@ Files from external repositories or websites:
 
 generate typescript file `gen/sqlite.parser.ts`
 ```shell
-./node_modules/.bin/peggy --plugin ./node_modules/ts-pegjs/src/tspegjs -o src/gen/sqlite.parser.ts pegjs/sqlite-parser.pegjs
+npm run generate
 ```
 
 ### Other

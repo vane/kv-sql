@@ -79,7 +79,8 @@ clearData.addEventListener('click', async() => {
 sqlRun.addEventListener('click',  async () => {
     try {
         btnState(true)
-        await db.execute(txt.value)
+        const res = await db.execute(txt.value);
+        Logger.info('sqlRun.click', res)
         propagateStats()
     } catch (e) {
         Logger.error(e)

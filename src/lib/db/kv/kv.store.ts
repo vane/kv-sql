@@ -1,6 +1,7 @@
 import {KVTable} from "./kv.table";
 import {KvOpInsert} from "./kv.op.insert";
 import {KvOpSelect} from "./kv.op.select";
+import {Logger} from "../../logger";
 
 
 export class KVStore {
@@ -11,6 +12,10 @@ export class KVStore {
         this.table = new KVTable(prefix);
         this.insert = new KvOpInsert(prefix, this.table);
         this.select = new KvOpSelect(prefix, this.table);
+    }
+
+    begin() {
+        Logger.debug('begin')
     }
 
     commit() {

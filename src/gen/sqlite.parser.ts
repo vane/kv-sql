@@ -22760,7 +22760,7 @@ function peg$parse(input: string, options?: ParseOptions) {
     }
 
     function keyNode(node) {
-      return textNode(node).toLowerCase();
+      return textNode(node);
     }
 
     function isArrayOkay(arr) {

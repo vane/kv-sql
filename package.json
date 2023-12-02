@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate": "peggy --plugin ./node_modules/ts-pegjs/src/tspegjs -o src/gen/sqlite.parser.ts pegjs/sqlite-parser.pegjs"
   },
   "devDependencies": {
     "peggy": "^3.0.2",

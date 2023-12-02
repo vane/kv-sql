@@ -6,8 +6,7 @@ export const selectStmt = (q: any, kv: KVStore) => {
     switch (q.from.variant) {
         case 'table': {
             Logger.debug('selectStmt', q);
-            kv.select.table(q.from.name, q.result, q.limit);
-            break;
+            return kv.select.table(q.from.name, q.result, q.limit, q.order);
         }
         default: {
             Logger.warn('selectStmt', q);
