@@ -21,23 +21,37 @@ npm run generate
 2. click clear data to clear `localStorage` from keys
 
 ### sample working sql queries
+
+insert
+```sql
+insert into artists VALUES (276, 'foo');
+```
+
+select  
 ```sql
 select * from artists limit 10 offset 10;
 select * from artists order by ArtistId desc;
 select * from artists where ArtistId > 1 and ArtistId < 10;
-update artists set Name = 'foo' where ArtistId = 1;
 select Name from artists;
-update artists set Name = 'foo' where ArtistId < 10;
 select * from artists where Name = 'foo';
-delete from artists where ArtistId = 1;
-delete from artists where ArtistId < 5;
 select * from artists where ArtistId in (1, 6, 8, 121);
-delete from artists where Name = 'foo';
 select * from artists limit 100 offset 277;
 select * from artists order by ArtistId desc limit 5 offset 10;
-insert into artists VALUES (276, 'foo');
 select * from artists where artists.ArtistId in (select ArtistId from albums);
 select * from artists where artists.ArtistId not in (select ArtistId from albums);
+```
+
+update  
+```sql
+update artists set Name = 'foo' where ArtistId = 1;
+update artists set Name = 'foo' where ArtistId < 10;
+```
+
+delete
+```sql
+delete from artists where ArtistId = 1;
+delete from artists where ArtistId < 5;
+delete from artists where Name = 'foo';
 ```
 
 special  
