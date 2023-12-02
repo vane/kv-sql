@@ -5,7 +5,7 @@ import {DBError, DBErrorType} from "../db.error";
 export const insertStmt = (q, kv: KVStore) => {
     switch (q.into.variant) {
         case 'table': {
-            kv.op.insertTable(q.into.name, q.result);
+            kv.insert.table(q.into.name, q.result);
             break
         }
         default: {

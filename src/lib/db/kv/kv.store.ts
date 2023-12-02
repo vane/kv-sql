@@ -1,20 +1,30 @@
 import {KVTable} from "./kv.table";
-import {KVOp} from "./kv.op";
+import {KvOpInsert} from "./kv.op.insert";
+import {KvOpSelect} from "./kv.op.select";
 
 
 export class KVStore {
     readonly table: KVTable;
-    readonly op: KVOp;
+    readonly insert: KvOpInsert;
+    readonly select: KvOpSelect;
     constructor(private prefix: string) {
         this.table = new KVTable(prefix);
-        this.op = new KVOp(prefix, this.table);
+        this.insert = new KvOpInsert(prefix, this.table);
+        this.select = new KvOpSelect(prefix, this.table);
     }
 
     commit() {
         this.table.commit();
+        this.insert.commit();
     }
 
     rollback() {
         this.table.rollback();
+        this.insert.rollback();
+    }
+
+    clear() {
+        this.table.rollback();
+        this.insert.rollback();
     }
 }

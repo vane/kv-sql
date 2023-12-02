@@ -2,7 +2,10 @@ import {ConstraintActionVariant, DatatypeVariant} from "../../parser/sql.parser.
 
 export interface KVTableConsPk {
     id?: string;
+    first?: string;
+    name?: string;
     auto: boolean;
+    cname?: string[];
 }
 
 export interface KVTableConsFk {
@@ -12,14 +15,13 @@ export interface KVTableConsFk {
 
 export interface KVTableCons {
     id : number;
-    pk?: KVTableConsPk;
     fk?: KVTableConsFk;
     cname?: string[];
     name: string;
 }
 
 export interface KVTableConsMap {
-    pk?: string;
+    pk: KVTableConsPk;
     defs: {[key: string]: KVTableCons}
 }
 
@@ -45,3 +47,8 @@ export interface KVTables {
     defs: {[key: string]: KVTableDef};
 }
 
+export interface KVRow {
+    id: string
+    next?: string
+    data: string[]
+}

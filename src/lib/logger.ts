@@ -51,7 +51,9 @@ export class Logger {
 		if (!this.el) return;
 		let msg = ''
 		for (const arg of args) {
-			if (arg instanceof Object) {
+			if (arg instanceof Error) {
+				msg += `<pre>${arg.stack}</pre>`
+			} else if (arg instanceof Object) {
 				msg += `${JSON.stringify(arg)} `
 			} else {
 				msg += `${arg} `

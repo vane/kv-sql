@@ -5,6 +5,7 @@ import {createTableStmt} from "./stmt/create.table.stmt";
 import {DBError, DBErrorType} from "./db.error";
 import {insertStmt} from "./stmt/insert.stmt";
 import {Benchmark} from "../benchmark";
+import {selectStmt} from "./stmt/select.stmt";
 
 export class SQLConnection {
     private readonly kv: KVStore;
@@ -16,20 +17,22 @@ export class SQLConnection {
     async execute(query: string) {
         Benchmark.start('SQLConnection.asyncParser');
         const ast = await asyncParser(query);
-        Logger.debug('SQLConnection.execute.ast', ast.statement.length, 'in');
         Benchmark.stop('SQLConnection.asyncParser');
+        if (!ast) {
+            Logger.warn('Empty ast', ast);
+            return;
+        }
         if (ast.type !== 'statement' || ast.variant !== 'list') throw new DBError(DBErrorType.NOT_IMPLEMENTED);
+
         Benchmark.start('SQLConnection.executeStmt');
         for (const stmt of ast.statement) {
             await this.executeStmt(stmt);
         }
-        Benchmark.stop('SQLConnection.executeStmt', ast.statement.length);
-        Benchmark.start('kv.table.commit');
-        this.kv.table.commit();
-        Benchmark.stop('kv.table.commit');
-        Benchmark.start('kv.op.commit');
-        this.kv.op.commit();
-        Benchmark.stop('kv.op.commit');
+        Benchmark.stop('SQLConnection.executeStmt', `insert ${ast.statement.length} rows`);
+
+        Benchmark.start('kv.commit');
+        this.kv.commit()
+        Benchmark.stop('kv.commit');
     }
 
     private executeStmt(q: any) {
@@ -43,6 +46,9 @@ export class SQLConnection {
             }
             case 'insert': {
                 return insertStmt(q, this.kv);
+            }
+            case 'select': {
+                return selectStmt(q, this.kv);
             }
             default: {
                 Logger.warn(`Unsupported statement type ${q.variant}`, q)
@@ -58,5 +64,14 @@ export class SQLConnection {
                 Logger.warn('SQLConnection.resolveTx not implemented', q);
             }
         }
+    }
+
+    clear(): void {
+        for (let key of Object.keys(localStorage)) {
+            if (key.startsWith(this.prefix)) {
+                localStorage.removeItem(key);
+            }
+        }
+        this.kv.clear();
     }
 }

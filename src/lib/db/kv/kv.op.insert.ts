@@ -8,27 +8,27 @@ import {
     InsertResultExpression,
     InsertResultType
 } from "../../parser/sql.parser.model";
-import {KVTableCol, KVTableDef} from "./kv.model";
+import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
 import {KvConstraints} from "./kv.constraints";
 
-export class KVOp {
-    private store = {};
-    constructor(private prefix: string, private table: KVTable) {
-        Logger.debug('KVTable', prefix, 'td', this.table.td.defs);
+export class KvOpInsert {
+    private store: {[key: string]: KVRow} = {};
+    constructor(private prefix: string, private tb: KVTable) {
+        Logger.debug('KvOpInsert', prefix);
     }
 
-    insertTable(tname: string, results: InsertResult[]) {
-        if (!this.table.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
-        const def = this.table.td.defs[tname];
+    table(tname: string, results: InsertResult[]) {
+        if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
+        const def = this.tb.td.defs[tname];
         // pk
-        const pk = def.cons.defs[def.cons.pk];
+        const pk = def.cons.pk;
         let pkCol = []
-        if (pk.pk && pk.cname) pkCol = pk.cname.concat();
+        if (pk.cname) pkCol = pk.cname.concat();
         for (const result of results) {
             switch (result.type) {
                 case InsertResultType.expression:
                     if (def.colid !== result.expression.length) {
-                        Logger.warn('KVOp.insertTable', result.expression.length, this.table.td.defs[tname].id);
+                        Logger.warn('KVOp.insertTable', result.expression.length, this.tb.td.defs[tname].id);
                         throw new DBError(DBErrorType.INSERT_ROW_SIZE, `${result.expression.length} != ${def.colid}`);
                     }
                     const row = [];
@@ -45,7 +45,8 @@ export class KVOp {
                         Logger.warn('KVOp.insertTable', 'row', row, 'insert', result, 'def', def)
                         throw new DBError(DBErrorType.INSERT_MISSING_PK, `${pkCol.join(',')}`)
                     }
-                    this.insertRow(def, rowId, row);
+                    this.updateNext(def, pk, rowId);
+                    this.insertRow(def, rowId, row, pk);
                     break;
                 default:
                     throw new DBError(DBErrorType.NOT_IMPLEMENTED, result.type);
@@ -83,14 +84,27 @@ export class KVOp {
         }
     }
 
-    private insertRow(def: KVTableDef, rowId: string, row: string[]) {
-        const rkey = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${rowId}`
-        this.store[rkey] = row;
+    private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
+        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${rowId}`
+        const row = {data, id: rowId}
+        this.store[key] = row
+        // current id
+        pk.id = rowId;
+        if (!pk.first) pk.first = rowId;
+        return row
+    }
+
+    private updateNext(def: KVTableDef, pk: KVTableConsPk, next: string) {
+        if (!pk.id) return;
+        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${pk.id}`
+        const row = this.store[key]
+        row.next = next
+        this.store[key] = row
     }
 
     commit() {
         for(let key in this.store) {
-            localStorage.setItem(key, this.store[key]);
+            localStorage.setItem(key, JSON.stringify(this.store[key]));
         }
     }
 

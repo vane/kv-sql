@@ -68,8 +68,8 @@ fillData.addEventListener('click', async () => {
 clearData.addEventListener('click', async() => {
     btnState(true)
     try {
-        Logger.debug('clear data', dbName);
-        SQLDb.clear(dbName)
+        Logger.debug('clear data', dbName)
+        db.clear()
         propagateStats()
     } finally {
         btnState(false)
