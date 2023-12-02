@@ -16,7 +16,7 @@ export class KvOpSelect {
         if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
         const def: KVTableDef = this.tb.td.defs[tname];
         const pk = def.cons.pk
-        Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, '')
+        Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, 'where', where)
         let tlimit = -1
         let offset = 0
         if (limit?.start) tlimit = parseInt(limit.start.value)
@@ -89,7 +89,6 @@ export class KvOpSelect {
             if (!row.next) break
             row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${row.next}`)
         }
-        Logger.debug('KvOpSelect.selectAll row', rows, rows.length, offset)
         return rows
     }
 

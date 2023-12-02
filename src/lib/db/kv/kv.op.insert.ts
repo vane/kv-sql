@@ -3,7 +3,6 @@ import {KVTable} from "./kv.table";
 import {DBError, DBErrorType} from "../db.error";
 import {
     DatatypeVariant,
-    InsertExpressionVariant,
     InsertResult,
     InsertResultExpression,
     InsertResultType
@@ -65,16 +64,16 @@ export class KvOpInsert {
     private evaluateValue(def: KVTableDef, col: KVTableCol, res: InsertResultExpression) {
         // TODO validate constraints in KVTableDef
         switch (res.variant) {
-            case InsertExpressionVariant.decimal: {
+            case DatatypeVariant.decimal: {
                 if (col.type === DatatypeVariant.integer) return true;
                 if (col.type === DatatypeVariant.numeric) return true;
             }
-            case InsertExpressionVariant.text: {
+            case DatatypeVariant.text: {
                 if (col.type === DatatypeVariant.nvarchar) return true;
                 // TODO validate datetime value
                 if (col.type === DatatypeVariant.datetime) return true;
             }
-            case InsertExpressionVariant.null: {
+            case DatatypeVariant.null: {
                 if (!col.notNull) return true;
             }
             default: {

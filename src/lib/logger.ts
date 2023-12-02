@@ -16,13 +16,16 @@ export class Logger {
 	}
 
 	static log(...args) {
-		if (this.level === LogLevel.LOG) console.log(...args);
+		if (this.level === LogLevel.LOG) {
+			console.log(...args);
+			this.logEl(LogLevel.LOG, ...args)
+		}
 	}
 
 	static debug(...args) {
 		if (this.level <= LogLevel.DEBUG) {
 			console.log(...args);
-			this.logEl(LogLevel.LOG, ...args);
+			this.logEl(LogLevel.DEBUG, ...args);
 		}
 	}
 
@@ -62,6 +65,7 @@ export class Logger {
 		let color = 'black'
 		switch (level) {
 			case LogLevel.LOG:
+			case LogLevel.DEBUG:
 			case LogLevel.INFO:
 				break;
 			case LogLevel.WARN:
