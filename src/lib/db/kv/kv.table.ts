@@ -7,7 +7,7 @@ import {
     ConstraintColumnVariant, ConstraintDefinition,
     ConstraintDefinitionVariant,
     CVariant,
-    DatatypeVariant,
+    SqlDatatype,
     VariantDefinition,
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
@@ -68,7 +68,7 @@ export class KVTable {
     private createTable(def: KVTableDef, cols: CVariant[]) {
         Logger.debug('createTable', def)
         for (let col of cols) {
-            switch (col.variant) {
+            switch (col.variant.toLowerCase()) {
                 case VariantDefinition.column: {
                     ++def.colid;
                     const c = this.createColumn(col as Column, def.colid);
@@ -99,11 +99,11 @@ export class KVTable {
     }
 
     private createColumn(col: Column, id: number):KVTableCol  {
-        switch (col.datatype.variant) {
-            case DatatypeVariant.datetime:
-            case DatatypeVariant.integer:
-            case DatatypeVariant.numeric:
-            case DatatypeVariant.nvarchar:
+        switch (col.datatype.variant.toLowerCase()) {
+            case SqlDatatype.datetime:
+            case SqlDatatype.integer:
+            case SqlDatatype.numeric:
+            case SqlDatatype.nvarchar:
                 break
             default: {
                 Logger.debug('createColumn', col);
@@ -112,7 +112,7 @@ export class KVTable {
         }
         let notNull = false;
         for (let def of col.definition) {
-            switch (def.variant) {
+            switch (def.variant.toLowerCase()) {
                 case ColumnDefinitionVariant.not_null:
                     notNull = true;
                     break;

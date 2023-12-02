@@ -1,16 +1,16 @@
-import {DatatypeVariant} from "../../parser/sql.parser.model";
+import {SqlDatatype} from "../../parser/sql.parser.model";
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
 
-export const dbEvalValue = (val: string, type: DatatypeVariant) => {
-    switch (type) {
-        case DatatypeVariant.integer:
+export const dbEvalValue = (val: string, type: SqlDatatype) => {
+    switch (type.toLowerCase()) {
+        case SqlDatatype.integer:
             return parseInt(val)
-        case DatatypeVariant.numeric:
-        case DatatypeVariant.decimal:
+        case SqlDatatype.numeric:
+        case SqlDatatype.decimal:
             return parseFloat(val)
-        case DatatypeVariant.datetime:
-        case DatatypeVariant.nvarchar:
+        case SqlDatatype.datetime:
+        case SqlDatatype.nvarchar:
             break
         default: {
             Logger.warn('dbEvalValue', type, val);

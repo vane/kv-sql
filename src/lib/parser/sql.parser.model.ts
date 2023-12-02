@@ -61,12 +61,8 @@ export interface Constraint extends CVariant {
 //////////////////////////
 // COLUMN
 //////////////////////////
-export enum DatatypeAffinity {
-    text = 'text',
-    integer = 'integer',
-}
 
-export enum DatatypeVariant {
+export enum SqlDatatype {
     datetime = 'datetime',
     integer = 'integer',
     nvarchar = 'nvarchar',
@@ -77,8 +73,8 @@ export enum DatatypeVariant {
 }
 
 export interface ColumnDatatype {
-    affinity: DatatypeAffinity;
-    variant: DatatypeVariant;
+    affinity: SqlDatatype;
+    variant: SqlDatatype;
 }
 
 export enum ColumnDefinitionType {
@@ -134,7 +130,7 @@ export enum InsertDataType {
 
 export interface InsertResultExpression {
     type: InsertDataType;
-    variant: DatatypeVariant;
+    variant: SqlDatatype;
     value: string;
 }
 

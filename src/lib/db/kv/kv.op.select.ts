@@ -3,7 +3,7 @@ import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
 import {KvConstraints} from "./kv.constraints";
-import {DatatypeVariant} from "../../parser/sql.parser.model";
+import {SqlDatatype} from "../../parser/sql.parser.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
 

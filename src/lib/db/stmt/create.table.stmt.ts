@@ -6,8 +6,8 @@ export const createTableStmt = (q: any, kv: KVStore) => {
     let existsOk = false;
     // primitive check if not exists
     if (q.condition && q.condition[0] &&
-        q.condition[0].variant === 'if' &&
-        q.condition[0].condition.operator === 'not exists') existsOk = true;
+        q.condition[0].variant.toLowerCase() === 'if' &&
+        q.condition[0].condition.operator.toLowerCase() === 'not exists') existsOk = true;
 
     if (kv.table.has(tableName)) {
         if (!existsOk) throw new DBError(DBErrorType.TABLE_EXISTS, tableName);

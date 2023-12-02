@@ -2,7 +2,7 @@ import {Logger} from "../../logger";
 import {KVTable} from "./kv.table";
 import {DBError, DBErrorType} from "../db.error";
 import {
-    DatatypeVariant,
+    SqlDatatype,
     InsertResult,
     InsertResultExpression,
     InsertResultType
@@ -17,7 +17,10 @@ export class KvOpInsert {
     }
 
     table(tname: string, results: InsertResult[]) {
-        if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
+        if (!this.tb.has(tname)) {
+            Logger.warn('KvOpInsert.table', this.tb.td);
+            throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
+        }
         const def = this.tb.td.defs[tname];
         // pk
         const pk = def.cons.pk;
@@ -35,7 +38,7 @@ export class KvOpInsert {
                     for (let key: string in def.cols) {
                         const col = def.cols[key];
                         const res = result.expression[col.id - 1];
-                        this.evaluateValue(def, def.cols[key], res);
+                        this.validateColumnValue(def, def.cols[key], res);
                         // pk
                         if (pkCol.includes(key)) rowId = this.evaluatePk(pkCol, key, res.value, rowId);
                         row.push(res.value);
@@ -61,23 +64,23 @@ export class KvOpInsert {
         return rowId + value;
     }
 
-    private evaluateValue(def: KVTableDef, col: KVTableCol, res: InsertResultExpression) {
+    private validateColumnValue(def: KVTableDef, col: KVTableCol, res: InsertResultExpression) {
         // TODO validate constraints in KVTableDef
-        switch (res.variant) {
-            case DatatypeVariant.decimal: {
-                if (col.type === DatatypeVariant.integer) return true;
-                if (col.type === DatatypeVariant.numeric) return true;
+        switch (res.variant.toLowerCase()) {
+            case SqlDatatype.decimal: {
+                if (col.type.toLowerCase() === SqlDatatype.integer) return true;
+                if (col.type.toLowerCase() === SqlDatatype.numeric) return true;
             }
-            case DatatypeVariant.text: {
-                if (col.type === DatatypeVariant.nvarchar) return true;
+            case SqlDatatype.text: {
+                if (col.type.toLowerCase() === SqlDatatype.nvarchar) return true;
                 // TODO validate datetime value
-                if (col.type === DatatypeVariant.datetime) return true;
+                if (col.type.toLowerCase() === SqlDatatype.datetime) return true;
             }
-            case DatatypeVariant.null: {
+            case SqlDatatype.null: {
                 if (!col.notNull) return true;
             }
             default: {
-                Logger.warn('KVOp.evaluateValue', col, res);
+                Logger.warn('KvOpInsert.evaluateValue', col, res);
                 throw new DBError(DBErrorType.NOT_IMPLEMENTED, `got ${res.variant} expected ${col.type}`);
             }
         }
@@ -85,12 +88,17 @@ export class KvOpInsert {
 
     private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
         const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${rowId}`
+        if (this.hasKey(key)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
         const row = {data, id: rowId}
         this.store[key] = row
         // current id
         pk.id = rowId;
         if (!pk.first) pk.first = rowId;
         return row
+    }
+
+    private hasKey(key: string): boolean {
+        return !!localStorage.getItem(key)
     }
 
     private updateNext(def: KVTableDef, pk: KVTableConsPk, next: string) {

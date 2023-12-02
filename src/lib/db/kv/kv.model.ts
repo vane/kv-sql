@@ -1,4 +1,4 @@
-import {ConstraintActionVariant, DatatypeVariant} from "../../parser/sql.parser.model";
+import {ConstraintActionVariant, SqlDatatype} from "../../parser/sql.parser.model";
 
 export interface KVTableConsPk {
     id?: string;
@@ -29,7 +29,7 @@ export interface KVTableConsMap {
 export interface KVTableCol {
     id: number;
     name: string;
-    type: DatatypeVariant;
+    type: SqlDatatype;
     notNull: boolean;
 }
 

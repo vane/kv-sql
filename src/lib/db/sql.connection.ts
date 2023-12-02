@@ -41,12 +41,13 @@ export class SQLConnection {
     }
 
     private executeStmt(q: any): any {
-        switch (q.variant) {
+        switch (q.variant.toLowerCase()) {
             case 'transaction': {
                 return this.resolveTx(q);
             }
             case 'create': {
-                if (q.format === 'table') return createTableStmt(q, this.kv);
+                if (q.format.toLowerCase() === 'table') return createTableStmt(q, this.kv);
+                Logger.warn(`Unsupported create format ${q.format}`, q)
                 break;
             }
             case 'insert': {
