@@ -35,6 +35,7 @@ delete from artists where Name = 'foo';
 select * from artists limit 100 offset 277;
 select * from artists order by ArtistId desc limit 5 offset 10;
 insert into artists VALUES (276, 'foo');
+select * from artists where artists.ArtistId in (select ArtistId from albums)
 ```
 
 ### Other

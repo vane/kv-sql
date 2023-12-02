@@ -1,18 +1,18 @@
-import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
 import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
 import {KvStore} from "./kv.store";
+import {KvOp} from "./kv.op";
 
 export class KvOpSelect {
-    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvOpSelect.constructor', prefix)
     }
 
     table(tname: string, columns: any[], limit?: any, order?: any[], where?: any): KVResultRow[] {
-        const def: KVTableDef = this.tb.get(tname)
+        const def: KVTableDef = this.op.table.get(tname)
         const pk = def.cons.pk
         Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, 'where', where)
         let tlimit = -1
@@ -76,8 +76,8 @@ export class KvOpSelect {
 
     private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], where?: any): KVResultRow[] {
         if (!pk.first) return []
-        let rows = []
-        let row = this.store.getRow(def.id, pk.first)
+        let rows: KVResultRow[] = []
+        let row = this.op.store.getRow(def.id, pk.first)
         while (row) {
             // map rows to cols
             const o = {_id: row.id}
@@ -85,15 +85,12 @@ export class KvOpSelect {
                 o[def.idx[i]] = dbEvalValue(val, def.cols[def.idx[i]].type)
                 return o
             })
-            if (where) {
-                if (dbEvalWhere(where, o)) rows.push(this.filterCols(o, cols))
-            } else{
-                rows.push(this.filterCols(o, cols))
-            }
+            rows.push(this.filterCols(o, cols))
             if (!row.next) break
 
-            row = this.store.getRow(def.id, row.next)
+            row = this.op.store.getRow(def.id, row.next)
         }
+        if (where) return dbEvalWhere(where, rows, def, this.op)
         return rows
     }
 
