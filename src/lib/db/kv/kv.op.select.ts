@@ -39,10 +39,15 @@ export class KvOpSelect {
                 }
             }
         }
-        const result = this.selectAll(def, pk, cols, tlimit, offset, where);
-        if (!order) return result;
+        let result = this.selectAll(def, pk, cols, where);
         if (result.length === 0) return result;
-        return this.orderBy(result, order);
+        if (order) result = this.orderBy(result, order);
+        if (tlimit > 0 && offset) {
+            if (result.length < offset) return [];
+            return result.slice(offset, Math.min(offset+tlimit, result.length))
+        }
+        if (tlimit > 0) return result.slice(0, Math.min(tlimit, result.length))
+        return result
     }
 
     private orderBy(result: KVResultRow[], order: any[]): KVResultRow[] {
@@ -69,18 +74,11 @@ export class KvOpSelect {
         return result
     }
 
-    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], limit: number, offset: number, where?: any): KVResultRow[] {
+    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], where?: any): KVResultRow[] {
         if (!pk.first) return []
         let rows = []
         let row = this.store.getRow(def.id, pk.first)
-        while (row && (limit < 0 || rows.length < limit)) {
-            // todo fix performance
-            if (offset > 0) {
-                offset--;
-                if (!row.next) break
-                row = this.store.getRow(def.id, row.next)
-                continue;
-            }
+        while (row) {
             // map rows to cols
             const o = {_id: row.id}
             row.data.forEach((val, i) => {
