@@ -1,12 +1,7 @@
 import {Logger} from "../../logger";
 import {KVTable} from "./kv.table";
 import {DBError, DBErrorType} from "../db.error";
-import {
-    SqlDatatype,
-    InsertResult,
-    InsertResultExpression,
-    InsertResultType
-} from "../../parser/sql.parser.model";
+import {InsertResult, InsertResultExpression, InsertResultType, SqlDatatype} from "../../parser/sql.parser.model";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
 import {KvStore} from "./kv.store";
 
@@ -92,10 +87,17 @@ export class KvOpInsert {
     }
 
     private updateNext(def: KVTableDef, pk: KVTableConsPk, next: string) {
-        if (!pk.id) return;
+        if (!pk.id) {
+            Logger.warn('KvOpInsert.updateNext empty id', pk.id, def.name, next)
+            return;
+        }
+
         const row = this.store.getRow(def.id, pk.id)
-        if (!row) return
+        if (!row) {
+            Logger.warn('KvOpInsert.updateNext empty row', pk, def, next)
+            throw new DBError(DBErrorType.ROW_NOT_EXISTS, `table "${def.name}" id "${pk.id}" next "${next}"`)
+        }
         row.next = next
-        this.store.setRow(def.id, pk.id, row)
+        this.store.setRow(def.id, row.id, row)
     }
 }

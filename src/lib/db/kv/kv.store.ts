@@ -24,8 +24,13 @@ export class KvStore {
 
     getRow(tableId: number, rowId: string): KVRow|undefined {
         const key = this.rowKey(tableId, rowId)
+        // try from cache
+        if (this.data[key]) return this.data[key]
+
+        // not found so find in storage
         const row = localStorage.getItem(key)
         if (!row) return undefined;
+
         this.data[key] = JSON.parse(row);
         return this.data[key];
     }

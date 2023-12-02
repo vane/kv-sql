@@ -41,7 +41,10 @@ export class KvOpUpdate {
         }
         // check column exists and get index
         const idx = def.idx.indexOf(s.target.name)
-        if (idx == -1) throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, `KvOpUpdate.assignRows ${s.target.name}`)
+        if (idx == -1) {
+            const msg = `KvOpUpdate.assignRows table "${def.name}" column "${s.target.name}"`
+            throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, msg)
+        }
 
         for (let row of rows) {
             const r = this.store.getRow(def.id, row._id)

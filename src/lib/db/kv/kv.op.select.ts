@@ -20,12 +20,18 @@ export class KvOpSelect {
         if (limit?.start) tlimit = parseInt(limit.start.value)
         if (limit?.offset) offset = Math.max(parseInt(limit.offset.value), 0)
         let all = false
+        let cols = []
         for (let col of columns) {
             switch (col.variant) {
                 case 'star':
                     all = true
                     break
                 case 'column':
+                    if (def.idx.indexOf(col.name) == -1) {
+                        const msg = `column "${col.name}" in table "${def.name}"`;
+                        throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, msg);
+                    }
+                    cols.push(col.name);
                     break
                 default: {
                     Logger.warn('KvOpSelect.table', tname, col);
@@ -33,7 +39,7 @@ export class KvOpSelect {
                 }
             }
         }
-        const result = this.selectAll(def, pk, tlimit, offset, where);
+        const result = this.selectAll(def, pk, cols, tlimit, offset, where);
         if (!order) return result;
         if (result.length === 0) return result;
         return this.orderBy(result, order);
@@ -63,7 +69,7 @@ export class KvOpSelect {
         return result
     }
 
-    private selectAll(def: KVTableDef, pk: KVTableConsPk, limit: number, offset: number, where?: any): KVResultRow[] {
+    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], limit: number, offset: number, where?: any): KVResultRow[] {
         if (!pk.first) return []
         let rows = []
         let row = this.store.getRow(def.id, pk.first)
@@ -82,14 +88,23 @@ export class KvOpSelect {
                 return o
             })
             if (where) {
-                if (dbEvalWhere(where, o)) rows.push(o)
+                if (dbEvalWhere(where, o)) rows.push(this.filterCols(o, cols))
             } else{
-                rows.push(o)
+                rows.push(this.filterCols(o, cols))
             }
             if (!row.next) break
 
             row = this.store.getRow(def.id, row.next)
         }
         return rows
+    }
+
+    private filterCols(o: KVResultRow, cols: string[]) {
+        if (cols.length == 0) return 0
+        const out = {_id: o._id}
+        for (const col of cols) {
+            out[col] = o[col]
+        }
+        return out
     }
 }
