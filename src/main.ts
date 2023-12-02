@@ -8,7 +8,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div style="display: flex;flex-direction: column;width: 420px">
       <div><h1>Execute SQL</h1></div>
       <div>
-        <textarea id="sql-query" rows="20" cols="50"></textarea>
+        <textarea id="sql-query" rows="20" cols="50" placeholder="select * from artists"></textarea>
       </div>
       <div>
         <button id="btn-sql-run" style="width: 100%">Execute</button>  

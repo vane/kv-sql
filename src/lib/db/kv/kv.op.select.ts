@@ -16,8 +16,8 @@ export class KvOpSelect {
         Logger.debug('KvOpSelect.table', def, result, 'margin', margin)
         let limit = -1
         let offset = 0
-        if (margin.start) limit = parseInt(margin.start.value)
-        if (margin.offset) offset = Math.max(parseInt(margin.offset.value), 0)
+        if (margin?.start) limit = parseInt(margin.start.value)
+        if (margin?.offset) offset = Math.max(parseInt(margin.offset.value), 0)
         let all = false
         for (let res of result) {
             switch (res.variant) {
