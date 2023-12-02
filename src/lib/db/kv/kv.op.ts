@@ -13,7 +13,6 @@ import {KvConstraints} from "./kv.constraints";
 
 export class KVOp {
     private store = {};
-    private newData = {};
     constructor(private prefix: string, private table: KVTable) {
         Logger.debug('KVTable', prefix, 'td', this.table.td.defs);
     }
@@ -90,11 +89,13 @@ export class KVOp {
     }
 
     commit() {
-        this.store = JSON.parse(JSON.stringify(this.newData));
+        for(let key in this.store) {
+            localStorage.setItem(key, this.store[key]);
+        }
     }
 
     rollback() {
-        this.newData = JSON.parse(JSON.stringify(this.store));
+        this.store = {};
     }
 
     dump() {

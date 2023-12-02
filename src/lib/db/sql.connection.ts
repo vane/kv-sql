@@ -16,7 +16,7 @@ export class SQLConnection {
     async execute(query: string) {
         Benchmark.start('SQLConnection.asyncParser');
         const ast = await asyncParser(query);
-        Logger.debug('SQLConnection.execute.ast', ast, 'in');
+        Logger.debug('SQLConnection.execute.ast', ast.statement.length, 'in');
         Benchmark.stop('SQLConnection.asyncParser');
         if (ast.type !== 'statement' || ast.variant !== 'list') throw new DBError(DBErrorType.NOT_IMPLEMENTED);
         Benchmark.start('SQLConnection.executeStmt');
@@ -24,8 +24,12 @@ export class SQLConnection {
             await this.executeStmt(stmt);
         }
         Benchmark.stop('SQLConnection.executeStmt', ast.statement.length);
-        Logger.debug('kv.table', this.kv.table.dump());
-        Logger.debug('kv.ops', this.kv.op.dump());
+        Benchmark.start('kv.table.commit');
+        this.kv.table.commit();
+        Benchmark.stop('kv.table.commit');
+        Benchmark.start('kv.op.commit');
+        this.kv.op.commit();
+        Benchmark.stop('kv.op.commit');
     }
 
     private executeStmt(q: any) {
