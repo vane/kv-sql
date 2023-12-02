@@ -66,6 +66,16 @@ export class SQLConnection {
         }
     }
 
+    keys(): string[] {
+        const keys = []
+        for (let key of Object.keys(localStorage)) {
+            if (key.startsWith(this.prefix)) {
+                keys.push(key)
+            }
+        }
+        return keys
+    }
+
     clear(): void {
         for (let key of Object.keys(localStorage)) {
             if (key.startsWith(this.prefix)) {

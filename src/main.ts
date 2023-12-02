@@ -38,7 +38,7 @@ const txt = document.getElementById('sql-query') as HTMLTextAreaElement
 const btns = [sqlRun, clearData, fillData]
 
 const propagateStats = () => {
-    keyStats.innerText = `Keys ${Object.keys(localStorage).length}`
+    keyStats.innerText = `Keys ${db.keys().length}`
 }
 
 const btnState = (disabled = false) => {

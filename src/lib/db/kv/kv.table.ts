@@ -11,7 +11,7 @@ import {
     VariantDefinition,
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
-import {KVTableCol, KVTableCons, KVTableConsFk, KVTableConsPk, KVTableDef, KVTables} from "./kv.model";
+import {KVTableCol, KVTableCons, KVTableConsFk, KVTableDef, KVTables} from "./kv.model";
 
 
 export class KVTable {
