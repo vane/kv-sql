@@ -73,13 +73,37 @@ const evalOperation = (w: any, o: KVResultRow, def: KVTableDef, op: KvOp, cache:
             return !cache[rstr].includes(evalLeft(w.left, o, def))
         }
         case 'not like': {
-            Logger.debug(w)
+            const rstr = JSON.stringify(w.right);
+            if (!cache[rstr]) cache[rstr] = evalRight(w.right, op)
+            const left = evalLeft(w.left, o, def)
+            if (w.right.variant === 'text') return !evalLike(left, cache[rstr])
+            Logger.debug('not like right', cache[rstr], 'left', left, 'exp', w)
+        }
+        case 'like': {
+            const rstr = JSON.stringify(w.right);
+            if (!cache[rstr]) cache[rstr] = evalRight(w.right, op)
+            const left = evalLeft(w.left, o, def)
+            if (w.right.variant === 'text') return evalLike(left, cache[rstr])
+            Logger.debug('like right', cache[rstr], 'left', left, 'exp', w)
         }
         default: {
             Logger.warn('evalOperation', w);
             throw new DBError(DBErrorType.NOT_IMPLEMENTED, `operation (${w.operation})`)
         }
     }
+}
+
+const evalLike = (left: string, right: string): boolean => {
+    if (right.endsWith('%')) {
+        if (left.startsWith(right.substring(0, right.length - 2))) return true
+    }
+    if (right.startsWith('%')) {
+        if (left.endsWith(right.substring(1, right.length - 1))) return true
+    }
+    if (right.startsWith('%') && right.endsWith('%')) {
+        if (left.indexOf(right.substring(1, right.length - 2)) > -1) return true
+    }
+    return false;
 }
 
 const evalLeft = (left: any, o: KVResultRow, def: KVTableDef) => {

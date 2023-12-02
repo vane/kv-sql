@@ -42,7 +42,8 @@ select * from artists where artists.ArtistId not in (select ArtistId from albums
 
 special  
 ```sql
-SELECT * FROM sqlite_schema
+SELECT * FROM sqlite_schema;
+SELECT name FROM sqlite_schema WHERE type ='table' AND name NOT LIKE 'sqlite_%';
 ```
 
 ### Other
