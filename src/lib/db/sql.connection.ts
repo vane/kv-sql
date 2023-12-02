@@ -1,6 +1,6 @@
 import {asyncParser} from "../parser/async.parser";
 import {Logger} from "../logger";
-import {KVStore} from "./kv/kv.store";
+import {KvOp} from "./kv/kv.op";
 import {createTableStmt} from "./stmt/create.table.stmt";
 import {DBError, DBErrorType} from "./db.error";
 import {insertStmt} from "./stmt/insert.stmt";
@@ -9,10 +9,10 @@ import {selectStmt} from "./stmt/select.stmt";
 import {updateStmt} from "./stmt/update.stmt";
 
 export class SQLConnection {
-    private readonly kv: KVStore;
+    private readonly kv: KvOp;
 
     constructor(private prefix: string) {
-        this.kv = new KVStore(prefix);
+        this.kv = new KvOp(prefix);
     }
 
     async execute(query: string) {

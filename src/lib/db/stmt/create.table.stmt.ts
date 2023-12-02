@@ -1,7 +1,7 @@
 import {DBError, DBErrorType} from "../db.error";
-import {KVStore} from "../kv/kv.store";
+import {KvOp} from "../kv/kv.op";
 
-export const createTableStmt = (q: any, kv: KVStore) => {
+export const createTableStmt = (q: any, kv: KvOp) => {
     const tableName = q.name.name;
     let existsOk = false;
     // primitive check if not exists

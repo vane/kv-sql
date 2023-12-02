@@ -1,8 +1,8 @@
-import {KVStore} from "../kv/kv.store";
+import {KvOp} from "../kv/kv.op";
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
 
-export const selectStmt = (q: any, kv: KVStore) => {
+export const selectStmt = (q: any, kv: KvOp) => {
     switch (q.from.variant) {
         case 'table': {
             Logger.debug('selectStmt', q);

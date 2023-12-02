@@ -11,6 +11,7 @@ export const dbEvalValue = (val: string, type: SqlDatatype) => {
             return parseFloat(val)
         case SqlDatatype.datetime:
         case SqlDatatype.nvarchar:
+        case SqlDatatype.text:
             break
         default: {
             Logger.warn('dbEvalValue', type, val);

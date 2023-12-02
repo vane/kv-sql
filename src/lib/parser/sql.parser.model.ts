@@ -38,18 +38,18 @@ export interface ConstraintDefinition {
     references?: ConstraintDefinitionReference;
 }
 
-export enum ConstraintColumnType {
+export enum ConstraintType {
     identifier = 'identifier'
 }
 
-export enum ConstraintColumnVariant {
+export enum ConstraintVariant {
     column = 'column'
 }
 
 export interface ConstraintColumn {
     name: string;
-    type: ConstraintColumnType;
-    variant: ConstraintColumnVariant;
+    type: ConstraintType;
+    variant: ConstraintVariant;
 }
 
 export interface Constraint extends CVariant {
@@ -77,16 +77,12 @@ export interface ColumnDatatype {
     variant: SqlDatatype;
 }
 
-export enum ColumnDefinitionType {
-    constraint = 'constraint',
-}
-
 export enum ColumnDefinitionVariant {
     not_null = 'not null',
 }
 
 export interface ColumnDefinition {
-    type: ColumnDefinitionType;
+    type: ConstraintType;
     variant: ColumnDefinitionVariant;
 }
 

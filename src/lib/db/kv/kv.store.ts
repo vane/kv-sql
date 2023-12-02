@@ -1,35 +1,41 @@
-import {KVTable} from "./kv.table";
-import {KvOpInsert} from "./kv.op.insert";
-import {KvOpSelect} from "./kv.op.select";
-import {Logger} from "../../logger";
-import {KvOpUpdate} from "./kv.op.update";
+import {KVRow} from "./kv.model";
+import {KvConstraints} from "./kv.constraints";
 
+export class KvStore {
+    private data: {[key: string]: KVRow} = {};
 
-export class KVStore {
-    readonly table: KVTable;
-    readonly insert: KvOpInsert;
-    readonly select: KvOpSelect;
-    readonly update: KvOpUpdate;
     constructor(private prefix: string) {
-        this.table = new KVTable(prefix);
-        this.insert = new KvOpInsert(prefix, this.table);
-        this.select = new KvOpSelect(prefix, this.table);
-        this.update = new KvOpUpdate(prefix, this.table);
-    }
-
-    begin() {
-        Logger.debug('begin')
     }
 
     commit() {
-        this.table.commit();
-        this.insert.commit();
-        this.update.commit();
+        for(let key in this.data) {
+            localStorage.setItem(key, JSON.stringify(this.data[key]));
+        }
     }
 
     rollback() {
-        this.table.rollback();
-        this.insert.rollback();
-        this.update.rollback();
+        this.data = {}
+    }
+
+    setRow(tableId: number, rowId: string, row: any) {
+        const key = this.rowKey(tableId, rowId)
+        this.data[key] = row;
+    }
+
+    getRow(tableId: number, rowId: string): KVRow|undefined {
+        const key = this.rowKey(tableId, rowId)
+        const row = localStorage.getItem(key)
+        if (!row) return undefined;
+        this.data[key] = JSON.parse(row);
+        return this.data[key];
+    }
+
+    hasRow(tableId: number, rowId): boolean {
+        const key = this.rowKey(tableId, rowId);
+        return !!localStorage.getItem(key)
+    }
+
+    private rowKey(tableId: number, rowId: string): string {
+        return `${this.prefix}_${KvConstraints.TABLE}${tableId}_${KvConstraints.ROW}${rowId}`
     }
 }

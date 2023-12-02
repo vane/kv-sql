@@ -8,20 +8,15 @@ import {
     InsertResultType
 } from "../../parser/sql.parser.model";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
-import {KvConstraints} from "./kv.constraints";
+import {KvStore} from "./kv.store";
 
 export class KvOpInsert {
-    private store: {[key: string]: KVRow} = {};
-    constructor(private prefix: string, private tb: KVTable) {
+    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
         Logger.debug('KvOpInsert', prefix);
     }
 
     table(tname: string, results: InsertResult[]) {
-        if (!this.tb.has(tname)) {
-            Logger.warn('KvOpInsert.table', this.tb.td);
-            throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
-        }
-        const def = this.tb.td.defs[tname];
+        const def = this.tb.get(tname);
         // pk
         const pk = def.cons.pk;
         let pkCol = []
@@ -30,7 +25,7 @@ export class KvOpInsert {
             switch (result.type) {
                 case InsertResultType.expression:
                     if (def.colid !== result.expression.length) {
-                        Logger.warn('KVOp.insertTable', result.expression.length, this.tb.td.defs[tname].id);
+                        Logger.warn('KVOp.insertTable', result.expression.length, def.id);
                         throw new DBError(DBErrorType.INSERT_ROW_SIZE, `${result.expression.length} != ${def.colid}`);
                     }
                     const row = [];
@@ -87,39 +82,20 @@ export class KvOpInsert {
     }
 
     private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
-        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${rowId}`
-        if (this.hasKey(key)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
+        if (this.store.hasRow(def.id, rowId)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
         const row = {data, id: rowId}
-        this.store[key] = row
+        this.store.setRow(def.id, rowId, row);
         // current id
         pk.id = rowId;
         if (!pk.first) pk.first = rowId;
         return row
     }
 
-    private hasKey(key: string): boolean {
-        return !!localStorage.getItem(key)
-    }
-
     private updateNext(def: KVTableDef, pk: KVTableConsPk, next: string) {
         if (!pk.id) return;
-        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${pk.id}`
-        const row = this.store[key]
+        const row = this.store.getRow(def.id, pk.id)
+        if (!row) return
         row.next = next
-        this.store[key] = row
-    }
-
-    commit() {
-        for(let key in this.store) {
-            localStorage.setItem(key, JSON.stringify(this.store[key]));
-        }
-    }
-
-    rollback() {
-        this.store = {};
-    }
-
-    dump() {
-        return this.store;
+        this.store.setRow(def.id, pk.id, row)
     }
 }

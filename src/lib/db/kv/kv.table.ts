@@ -4,7 +4,7 @@ import {
     Column,
     ColumnDefinitionVariant,
     Constraint, ConstraintAction,
-    ConstraintColumnVariant, ConstraintDefinition,
+    ConstraintVariant, ConstraintDefinition,
     ConstraintDefinitionVariant,
     CVariant,
     SqlDatatype,
@@ -15,7 +15,7 @@ import {KVTableCol, KVTableCons, KVTableConsFk, KVTableDef, KVTables} from "./kv
 
 
 export class KVTable {
-    td: KVTables;
+    private td: KVTables;
     private readonly tdPrefix: string;
 
     constructor(private prefix: string) {
@@ -23,7 +23,12 @@ export class KVTable {
         this.td = this.loadTd();
     }
 
-    has = (name: string): boolean => {
+    get(tname: string): KVTableDef {
+        if (!!this.td.defs[name]) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
+        return this.td.defs[tname];
+    }
+
+    has(name: string): boolean {
         return !!this.td.defs[name]
     }
 
@@ -132,7 +137,7 @@ export class KVTable {
         let cname = [];
         for (let col of cons.columns) {
             switch (col.variant) {
-                case ConstraintColumnVariant.column: {
+                case ConstraintVariant.column: {
                     cname.push(col.name)
                     break;
                 }
