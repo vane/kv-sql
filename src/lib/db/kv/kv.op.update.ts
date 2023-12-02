@@ -7,7 +7,7 @@ import {KvStore} from "./kv.store";
 
 export class KvOpUpdate {
     constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
-        Logger.debug('KvOpUpdate', prefix)
+        Logger.debug('KvOpUpdate.constructor', prefix)
     }
 
     rows(q: any, rows: KVResultRow[]) {
@@ -25,14 +25,6 @@ export class KvOpUpdate {
             }
         }
         return rows.length
-    }
-
-    commit() {
-
-    }
-
-    rollback() {
-
     }
 
     private assignRows(def: KVTableDef, s: any, rows: KVResultRow[]) {

@@ -19,6 +19,7 @@ export class KVTable {
     private readonly tdPrefix: string;
 
     constructor(private prefix: string) {
+        Logger.debug('KVTable.constructor', prefix);
         this.tdPrefix = `${this.prefix}_${KvConstraints.TABLE_DEFINITION}`
         this.td = this.loadTd();
     }
@@ -26,6 +27,15 @@ export class KVTable {
     get(tname: string): KVTableDef {
         if (!!this.td.defs[name]) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
         return this.td.defs[tname];
+    }
+
+    getId(tableId: number): KVTableDef {
+        for (let key in this.td.defs) {
+            const t = this.td.defs[key];
+            if (t.id === tableId) return t
+        }
+        // TODO return undefined
+        if (!!this.td.defs[name]) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, `id ${tableId}`);
     }
 
     has(name: string): boolean {

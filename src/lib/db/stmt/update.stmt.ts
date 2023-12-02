@@ -6,7 +6,6 @@ export const updateStmt = (q: any, kv: KvOp) => {
     switch (q.into.variant) {
         case 'table': {
             const rows = kv.select.table(q.into.name, [{variant: 'star'}], undefined, undefined, q.where)
-            Logger.debug('updateStmt', q, rows.length)
             if (rows.length == 0) return 0
             return kv.update.rows(q, rows)
         }

@@ -8,7 +8,7 @@ import {KvStore} from "./kv.store";
 
 export class KvOpSelect {
     constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
-        Logger.debug('KvOpSelect', prefix)
+        Logger.debug('KvOpSelect.constructor', prefix)
     }
 
     table(tname: string, columns: any[], limit?: any, order?: any[], where?: any): KVResultRow[] {
@@ -100,7 +100,7 @@ export class KvOpSelect {
     }
 
     private filterCols(o: KVResultRow, cols: string[]) {
-        if (cols.length == 0) return 0
+        if (cols.length == 0) return o
         const out = {_id: o._id}
         for (const col of cols) {
             out[col] = o[col]

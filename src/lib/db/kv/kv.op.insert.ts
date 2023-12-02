@@ -7,7 +7,7 @@ import {KvStore} from "./kv.store";
 
 export class KvOpInsert {
     constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
-        Logger.debug('KvOpInsert', prefix);
+        Logger.debug('KvOpInsert.constructor', prefix);
     }
 
     table(tname: string, results: InsertResult[]) {
@@ -78,7 +78,7 @@ export class KvOpInsert {
 
     private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
         if (this.store.hasRow(def.id, rowId)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
-        const row = {data, id: rowId}
+        const row: KVRow = {data, id: rowId, prev: pk.id}
         this.store.setRow(def.id, rowId, row);
         // current id
         pk.id = rowId;

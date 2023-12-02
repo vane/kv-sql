@@ -7,6 +7,7 @@ import {insertStmt} from "./stmt/insert.stmt";
 import {Benchmark} from "../benchmark";
 import {selectStmt} from "./stmt/select.stmt";
 import {updateStmt} from "./stmt/update.stmt";
+import {deleteStmt} from "./stmt/delete.stmt";
 
 export class SQLConnection {
     private readonly kv: KvOp;
@@ -58,6 +59,9 @@ export class SQLConnection {
             }
             case 'update': {
                 return updateStmt(q, this.kv);
+            }
+            case 'delete': {
+                return deleteStmt(q, this.kv);
             }
             default: {
                 Logger.warn(`Unsupported statement type ${q.variant}`, q)

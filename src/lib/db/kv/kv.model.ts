@@ -1,6 +1,9 @@
 import {ConstraintActionVariant, SqlDatatype} from "../../parser/sql.parser.model";
 
-export type KVResultRow = {[key:string]: any}
+export interface KVResultRow {
+    _id: string;
+    [key:string]: any;
+}
 
 export interface KVTableConsPk {
     id?: string;
@@ -53,5 +56,6 @@ export interface KVTables {
 export interface KVRow {
     id: string
     next?: string
+    prev?: string
     data: string[]
 }
