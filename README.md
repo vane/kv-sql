@@ -15,6 +15,23 @@ generate peg parser typescript file `gen/sqlite.parser.ts`
 npm run generate
 ```
 
+### example page
+1. click `Propagate Data` to fill `localStorage` with sample data
+   - now its possible to execute sample sql queries
+2. click clear data to clear `localStorage` from keys
+
+### sample working sql queries
+```sql
+select * from artists where ArtistId > 1 and ArtistId < 10;
+update artists set Name = 'foo' where ArtistId = 1;
+select Name from artists;
+update artists set Name = 'foo' where ArtistId < 10;
+select * from artists where Name = 'foo';
+delete from artists where ArtistId < 5;
+select * from artists where ArtistId in (1, 6, 8, 121)
+delete from artists where Name = 'foo'
+```
+
 ### Other
 
 [documentation about data format inside tidb](https://www.pingcap.com/blog/tidb-internal-computing/)
