@@ -70,7 +70,10 @@ export enum DatatypeVariant {
     datetime = 'datetime',
     integer = 'integer',
     nvarchar = 'nvarchar',
-    numeric = 'numeric'
+    numeric = 'numeric',
+    decimal= 'decimal',
+    text = 'text',
+    null = 'null'
 }
 
 export interface ColumnDatatype {
@@ -129,15 +132,9 @@ export enum InsertDataType {
     literal = 'literal'
 }
 
-export enum InsertExpressionVariant {
-    decimal= 'decimal',
-    text = 'text',
-    null = 'null'
-}
-
 export interface InsertResultExpression {
     type: InsertDataType;
-    variant: InsertExpressionVariant;
+    variant: DatatypeVariant;
     value: string;
 }
 
