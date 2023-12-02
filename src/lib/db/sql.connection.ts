@@ -44,7 +44,8 @@ export class SQLConnection {
     private executeStmt(q: any): any {
         switch (q.variant.toLowerCase()) {
             case 'transaction': {
-                return this.resolveTx(q);
+                Logger.warn('SQLConnection.executeStmt "transaction" not implemented', q);
+                break;
             }
             case 'create': {
                 if (q.format.toLowerCase() === 'table') return createTableStmt(q, this.kv);
@@ -68,16 +69,6 @@ export class SQLConnection {
             }
         }
         return undefined;
-    }
-
-    private resolveTx(q: any) {
-        switch (q.action) {
-            case 'begin':
-            case 'commit':
-            default: {
-                Logger.warn('SQLConnection.resolveTx not implemented', q);
-            }
-        }
     }
 
     keys(): string[] {
