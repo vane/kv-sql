@@ -29,14 +29,20 @@ update artists set Name = 'foo' where ArtistId = 1;
 select Name from artists;
 update artists set Name = 'foo' where ArtistId < 10;
 select * from artists where Name = 'foo';
+delete from artists where ArtistId = 1;
 delete from artists where ArtistId < 5;
 select * from artists where ArtistId in (1, 6, 8, 121);
 delete from artists where Name = 'foo';
 select * from artists limit 100 offset 277;
 select * from artists order by ArtistId desc limit 5 offset 10;
 insert into artists VALUES (276, 'foo');
-select * from artists where artists.ArtistId in (select ArtistId from albums)
-select * from artists where artists.ArtistId not in (select ArtistId from albums)
+select * from artists where artists.ArtistId in (select ArtistId from albums);
+select * from artists where artists.ArtistId not in (select ArtistId from albums);
+```
+
+special  
+```sql
+SELECT * FROM sqlite_schema
 ```
 
 ### Other

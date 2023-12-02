@@ -4,6 +4,7 @@ import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
 import {KvOp} from "./kv.op";
+import {dbColsFilter} from "../fn/db.cols.filter";
 
 export class KvOpSelect {
     constructor(private prefix: string, private op: KvOp) {
@@ -84,21 +85,13 @@ export class KvOpSelect {
                 o[def.idx[i]] = dbEvalValue(val, def.cols[def.idx[i]].type)
                 return o
             })
-            rows.push(this.filterCols(o, cols))
+            rows.push(o)
             if (!row.next) break
 
             row = this.op.store.getRow(def.id, row.next)
         }
-        if (where) return dbEvalWhere(where, rows, def, this.op)
-        return rows
-    }
-
-    private filterCols(o: KVResultRow, cols: string[]) {
-        if (cols.length == 0) return o
-        const out = {_id: o._id}
-        for (const col of cols) {
-            out[col] = o[col]
-        }
-        return out
+        if (where) return dbEvalWhere(where, rows, cols, def, this.op)
+        if (cols.length > 0) rows.map(r => dbColsFilter(r, cols))
+        return rows;
     }
 }

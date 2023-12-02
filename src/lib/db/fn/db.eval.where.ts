@@ -3,8 +3,9 @@ import {dbEvalValue} from "./db.eval.value";
 import {Logger} from "../../logger";
 import {KvOp} from "../kv/kv.op";
 import {KVResultRow, KVTableDef} from "../kv/kv.model";
+import {dbColsFilter} from "./db.cols.filter";
 
-export const dbEvalWhere = (where: any, rows: KVResultRow[], def: KVTableDef, op: KvOp): KVResultRow[] => {
+export const dbEvalWhere = (where: any, rows: KVResultRow[], cols: string[], def: KVTableDef, op: KvOp): KVResultRow[] => {
     // select * from artists where ArtistId > 5 and ArtistId < 10;
     // select * from artists where artists.ArtistId in (select ArtistId from albums)
     const result: KVResultRow[] = []
@@ -15,7 +16,7 @@ export const dbEvalWhere = (where: any, rows: KVResultRow[], def: KVTableDef, op
             case 'binary':
                 for (let r of rows) {
                     if (evalOperation(w, r, def, op, rCache)) {
-                        result.push(r)
+                        result.push(dbColsFilter(r, cols))
                     }
                 }
                 break;
@@ -29,7 +30,7 @@ export const dbEvalWhere = (where: any, rows: KVResultRow[], def: KVTableDef, op
 }
 
 const evalOperation = (w: any, o: KVResultRow, def: KVTableDef, op: KvOp, cache: any): boolean => {
-    switch (w.operation) {
+    switch (w.operation.toLowerCase()) {
         case '=': {
             const rstr = JSON.stringify(w.right);
             if (!cache[rstr]) cache[rstr] = evalRight(w.right, op)
@@ -70,6 +71,9 @@ const evalOperation = (w: any, o: KVResultRow, def: KVTableDef, op: KvOp, cache:
             const rstr = JSON.stringify(w.right);
             if (!cache[rstr]) cache[rstr] = evalRight(w.right, op)
             return !cache[rstr].includes(evalLeft(w.left, o, def))
+        }
+        case 'not like': {
+            Logger.debug(w)
         }
         default: {
             Logger.warn('evalOperation', w);
