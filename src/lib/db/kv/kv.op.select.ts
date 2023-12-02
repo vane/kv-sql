@@ -4,21 +4,23 @@ import {DBError, DBErrorType} from "../db.error";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
 import {KvConstraints} from "./kv.constraints";
 import {DatatypeVariant} from "../../parser/sql.parser.model";
+import {dbEvalValue} from "../fn/db.eval.value";
+import {dbEvalWhere} from "../fn/db.eval.where";
 
 export class KvOpSelect {
     constructor(private prefix: string, private tb: KVTable) {
         Logger.debug('KvOpSelect', prefix)
     }
 
-    table(tname: string, columns: any[], margin?: any, order?: any[]) {
+    table(tname: string, columns: any[], limit?: any, order?: any[], where?: any) {
         if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
         const def: KVTableDef = this.tb.td.defs[tname];
         const pk = def.cons.pk
-        Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', margin)
-        let limit = -1
+        Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, '')
+        let tlimit = -1
         let offset = 0
-        if (margin?.start) limit = parseInt(margin.start.value)
-        if (margin?.offset) offset = Math.max(parseInt(margin.offset.value), 0)
+        if (limit?.start) tlimit = parseInt(limit.start.value)
+        if (limit?.offset) offset = Math.max(parseInt(limit.offset.value), 0)
         let all = false
         for (let col of columns) {
             switch (col.variant) {
@@ -33,7 +35,7 @@ export class KvOpSelect {
                 }
             }
         }
-        const result = this.selectAll(def, pk, limit, offset);
+        const result = this.selectAll(def, pk, tlimit, offset, where);
         if (!order) return result;
         if (result.length === 0) return result;
         return this.orderBy(result, order);
@@ -63,7 +65,7 @@ export class KvOpSelect {
         return result
     }
 
-    private selectAll(def: KVTableDef, pk: KVTableConsPk, limit: number, offset: number): {[key:string]: any}[] {
+    private selectAll(def: KVTableDef, pk: KVTableConsPk, limit: number, offset: number, where?: any): {[key:string]: any}[] {
         let rows = []
         let row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${pk.first}`)
         while (row && (limit < 0 || rows.length < limit)) {
@@ -76,25 +78,19 @@ export class KvOpSelect {
             // map rows to cols
             const o = {}
             row.data.forEach((val, i) => {
-                o[def.idx[i]] = this.evalValue(val, def.cols[def.idx[i]])
+                o[def.idx[i]] = dbEvalValue(val, def.cols[def.idx[i]].type)
                 return o
             })
-            rows.push(o)
+            if (where) {
+                if (dbEvalWhere(where, o)) rows.push(o)
+            } else{
+                rows.push(o)
+            }
             if (!row.next) break
             row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${row.next}`)
         }
         Logger.debug('KvOpSelect.selectAll row', rows, rows.length, offset)
         return rows
-    }
-
-    private evalValue(val: string, col: KVTableCol) {
-        switch (col.type) {
-            case DatatypeVariant.integer:
-                return parseInt(val)
-            case DatatypeVariant.numeric:
-                return parseFloat(val)
-        }
-        return val
     }
 
     private getRow(key: string): KVRow|undefined {

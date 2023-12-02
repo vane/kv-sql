@@ -6,6 +6,7 @@ import {DBError, DBErrorType} from "./db.error";
 import {insertStmt} from "./stmt/insert.stmt";
 import {Benchmark} from "../benchmark";
 import {selectStmt} from "./stmt/select.stmt";
+import {updateStmt} from "./stmt/update.stmt";
 
 export class SQLConnection {
     private readonly kv: KVStore;
@@ -54,6 +55,9 @@ export class SQLConnection {
             case 'select': {
                 return selectStmt(q, this.kv);
             }
+            case 'update': {
+                return updateStmt(q, this.kv);
+            }
             default: {
                 Logger.warn(`Unsupported statement type ${q.variant}`, q)
             }
@@ -87,6 +91,6 @@ export class SQLConnection {
                 localStorage.removeItem(key);
             }
         }
-        this.kv.clear();
+        this.kv.rollback();
     }
 }
