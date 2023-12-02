@@ -10,11 +10,13 @@ import {insertStmt} from "../stmt/insert.stmt";
 import {selectStmt} from "../stmt/select.stmt";
 import {updateStmt} from "../stmt/update.stmt";
 import {deleteStmt} from "../stmt/delete.stmt";
+import {KvSpecial} from "./kv.special";
 
 
 export class KvOp {
-    readonly store: KvStore;
+    readonly special: KvSpecial;
     readonly table: KVTable;
+    readonly store: KvStore;
     readonly insert: KvOpInsert;
     readonly select: KvOpSelect;
     readonly update: KvOpUpdate;
@@ -22,12 +24,13 @@ export class KvOp {
 
     constructor(private prefix: string) {
         Logger.debug('KvOp.constructor', prefix);
-        this.table = new KVTable(prefix);
-        this.store = new KvStore(prefix, this.table);
-        this.insert = new KvOpInsert(prefix, this.table, this.store);
+        this.special = new KvSpecial(prefix, this);
+        this.table = new KVTable(prefix, this);
+        this.store = new KvStore(prefix, this);
+        this.insert = new KvOpInsert(prefix, this);
         this.select = new KvOpSelect(prefix, this);
-        this.update = new KvOpUpdate(prefix, this.table, this.store);
-        this.delete = new KvOpDelete(prefix, this.table, this.store);
+        this.update = new KvOpUpdate(prefix, this);
+        this.delete = new KvOpDelete(prefix, this);
     }
 
     begin() {

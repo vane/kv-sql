@@ -12,20 +12,21 @@ import {
 } from "../../parser/sql.parser.model";
 import {DBError, DBErrorType} from "../db.error";
 import {KVTableCol, KVTableCons, KVTableConsFk, KVTableDef, KVTables} from "./kv.model";
+import {KvOp} from "./kv.op";
 
 
 export class KVTable {
     private td: KVTables;
     private readonly tdPrefix: string;
 
-    constructor(private prefix: string) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KVTable.constructor', prefix);
         this.tdPrefix = `${this.prefix}_${KvConstraints.TABLE_DEFINITION}`
         this.td = this.loadTd();
     }
 
     get(tname: string): KVTableDef {
-        if (!!this.td.defs[name]) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
+        if (!this.td.defs[tname]) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
         return this.td.defs[tname];
     }
 
@@ -56,6 +57,7 @@ export class KVTable {
         }
         this.td.defs[name] = def
         this.createTable(def, cols);
+        this.op.special.addTable(name)
     }
 
     commit() {
@@ -66,17 +68,10 @@ export class KVTable {
         this.td = this.loadTd();
     }
 
-    dump() {
-        return this.td;
-    }
-
     private loadTd(): KVTables {
         const td = localStorage.getItem(this.tdPrefix)
         // initial value
-        if (!td) return {
-            id: 0,
-            defs: {},
-        };
+        if (!td) return this.op.special.init()
         return JSON.parse(td);
     }
 

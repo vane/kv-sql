@@ -2,6 +2,7 @@ import {KVRow} from "./kv.model";
 import {KvConstraints} from "./kv.constraints";
 import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
+import {KvOp} from "./kv.op";
 
 interface KVDelete {
     tableId: number;
@@ -12,7 +13,7 @@ export class KvStore {
     private data: {[key: string]: KVRow} = {};
     private deleted = new Set<KVDelete>()
 
-    constructor(private prefix: string, private td: KVTable) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvStore.constructor', prefix);
     }
 
@@ -22,7 +23,7 @@ export class KvStore {
         }
         for (let d of this.deleted) {
             const row = this.getRow(d.tableId, d.rowId)
-            const t = this.td.getId(d.tableId);
+            const t = this.op.table.getId(d.tableId);
             if (t.cons.pk.first == d.rowId) {
                 t.cons.pk.first = row?.next
             }

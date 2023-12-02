@@ -1,17 +1,16 @@
 import {Logger} from "../../logger";
-import {KVTable} from "./kv.table";
 import {DBError, DBErrorType} from "../db.error";
 import {InsertResult, InsertResultExpression, InsertResultType, SqlDatatype} from "../../parser/sql.parser.model";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
-import {KvStore} from "./kv.store";
+import {KvOp} from "./kv.op";
 
 export class KvOpInsert {
-    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvOpInsert.constructor', prefix);
     }
 
     table(tname: string, results: InsertResult[]) {
-        const def = this.tb.get(tname);
+        const def = this.op.table.get(tname);
         // pk
         const pk = def.cons.pk;
         let pkCol = []
@@ -62,9 +61,16 @@ export class KvOpInsert {
                 if (col.type.toLowerCase() === SqlDatatype.numeric) return true;
             }
             case SqlDatatype.text: {
+                if (col.type.toLowerCase() === SqlDatatype.text) return true;
                 if (col.type.toLowerCase() === SqlDatatype.nvarchar) return true;
                 // TODO validate datetime value
                 if (col.type.toLowerCase() === SqlDatatype.datetime) return true;
+            }
+            case SqlDatatype.nvarchar: {
+                if (col.type.toLowerCase() === SqlDatatype.nvarchar) return true;
+            }
+            case SqlDatatype.integer: {
+                if (col.type.toLowerCase() === SqlDatatype.integer) return true;
             }
             case SqlDatatype.null: {
                 if (!col.notNull) return true;
@@ -77,9 +83,9 @@ export class KvOpInsert {
     }
 
     private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
-        if (this.store.hasRow(def.id, rowId)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
+        if (this.op.store.hasRow(def.id, rowId)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
         const row: KVRow = {data, id: rowId, prev: pk.id}
-        this.store.setRow(def.id, rowId, row);
+        this.op.store.setRow(def.id, rowId, row);
         // current id
         pk.id = rowId;
         if (!pk.first) pk.first = rowId;
@@ -92,12 +98,12 @@ export class KvOpInsert {
             return;
         }
 
-        const row = this.store.getRow(def.id, pk.id)
+        const row = this.op.store.getRow(def.id, pk.id)
         if (!row) {
             Logger.warn('KvOpInsert.updateNext empty row', pk, def, next)
             throw new DBError(DBErrorType.ROW_NOT_EXISTS, `table "${def.name}" id "${pk.id}" next "${next}"`)
         }
         row.next = next
-        this.store.setRow(def.id, row.id, row)
+        this.op.store.setRow(def.id, row.id, row)
     }
 }

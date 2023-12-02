@@ -1,17 +1,16 @@
-import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
 import {KVResultRow, KVTableDef} from "./kv.model";
 import {DBError, DBErrorType} from "../db.error";
 import {ConstraintVariant} from "../../parser/sql.parser.model";
-import {KvStore} from "./kv.store";
+import {KvOp} from "./kv.op";
 
 export class KvOpUpdate {
-    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvOpUpdate.constructor', prefix)
     }
 
     rows(q: any, rows: KVResultRow[]) {
-        const def = this.tb.get(q.into.name)
+        const def = this.op.table.get(q.into.name)
         for (const s of q.set) {
             switch (s.type) {
                 case 'assignment': {
@@ -39,11 +38,11 @@ export class KvOpUpdate {
         }
 
         for (let row of rows) {
-            const r = this.store.getRow(def.id, row._id)
+            const r = this.op.store.getRow(def.id, row._id)
             if (!r) throw new DBError(DBErrorType.ROW_NOT_EXISTS, `KvOpUpdate.assignRows ${row._id}`)
 
             r.data[idx] = s.value.value;
-            this.store.setRow(def.id, row._id, r)
+            this.op.store.setRow(def.id, row._id, r)
         }
     }
 

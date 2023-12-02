@@ -3,7 +3,6 @@ import {DBError, DBErrorType} from "../db.error";
 import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
-import {KvStore} from "./kv.store";
 import {KvOp} from "./kv.op";
 
 export class KvOpSelect {
