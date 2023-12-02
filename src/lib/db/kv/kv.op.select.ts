@@ -1,18 +1,18 @@
-import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
 import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
-import {KvStore} from "./kv.store";
+import {KvOp} from "./kv.op";
+import {dbColsFilter} from "../fn/db.cols.filter";
 
 export class KvOpSelect {
-    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+    constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvOpSelect.constructor', prefix)
     }
 
     table(tname: string, columns: any[], limit?: any, order?: any[], where?: any): KVResultRow[] {
-        const def: KVTableDef = this.tb.get(tname)
+        const def: KVTableDef = this.op.table.get(tname)
         const pk = def.cons.pk
         Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, 'where', where)
         let tlimit = -1
@@ -39,10 +39,15 @@ export class KvOpSelect {
                 }
             }
         }
-        const result = this.selectAll(def, pk, cols, tlimit, offset, where);
-        if (!order) return result;
+        let result = this.selectAll(def, pk, cols, where);
         if (result.length === 0) return result;
-        return this.orderBy(result, order);
+        if (order) result = this.orderBy(result, order);
+        if (tlimit > 0 && offset) {
+            if (result.length < offset) return [];
+            return result.slice(offset, Math.min(offset+tlimit, result.length))
+        }
+        if (tlimit > 0) return result.slice(0, Math.min(tlimit, result.length))
+        return result
     }
 
     private orderBy(result: KVResultRow[], order: any[]): KVResultRow[] {
@@ -69,42 +74,24 @@ export class KvOpSelect {
         return result
     }
 
-    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], limit: number, offset: number, where?: any): KVResultRow[] {
+    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], where?: any): KVResultRow[] {
         if (!pk.first) return []
-        let rows = []
-        let row = this.store.getRow(def.id, pk.first)
-        while (row && (limit < 0 || rows.length < limit)) {
-            // todo fix performance
-            if (offset > 0) {
-                offset--;
-                if (!row.next) break
-                row = this.store.getRow(def.id, row.next)
-                continue;
-            }
+        let rows: KVResultRow[] = []
+        let row = this.op.store.getRow(def.id, pk.first)
+        while (row) {
             // map rows to cols
             const o = {_id: row.id}
             row.data.forEach((val, i) => {
                 o[def.idx[i]] = dbEvalValue(val, def.cols[def.idx[i]].type)
                 return o
             })
-            if (where) {
-                if (dbEvalWhere(where, o)) rows.push(this.filterCols(o, cols))
-            } else{
-                rows.push(this.filterCols(o, cols))
-            }
+            rows.push(o)
             if (!row.next) break
 
-            row = this.store.getRow(def.id, row.next)
+            row = this.op.store.getRow(def.id, row.next)
         }
-        return rows
-    }
-
-    private filterCols(o: KVResultRow, cols: string[]) {
-        if (cols.length == 0) return o
-        const out = {_id: o._id}
-        for (const col of cols) {
-            out[col] = o[col]
-        }
-        return out
+        if (where) return dbEvalWhere(where, rows, cols, def, this.op)
+        if (cols.length > 0) rows.map(r => dbColsFilter(r, cols))
+        return rows;
     }
 }
