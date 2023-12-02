@@ -1,6 +1,6 @@
-# localstorage-sql
+# kv-sql
 
-aim for this project is to parse sqlite ast -> write | read data -> to | from -> browser local storage 
+aim for this project is to parse sqlite ast -> write | read data -> to | from -> browser local storage / kv storage
 
 ### external files
 
