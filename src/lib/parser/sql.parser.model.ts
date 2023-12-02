@@ -38,18 +38,18 @@ export interface ConstraintDefinition {
     references?: ConstraintDefinitionReference;
 }
 
-export enum ConstraintColumnType {
+export enum ConstraintType {
     identifier = 'identifier'
 }
 
-export enum ConstraintColumnVariant {
+export enum ConstraintVariant {
     column = 'column'
 }
 
 export interface ConstraintColumn {
     name: string;
-    type: ConstraintColumnType;
-    variant: ConstraintColumnVariant;
+    type: ConstraintType;
+    variant: ConstraintVariant;
 }
 
 export interface Constraint extends CVariant {
@@ -61,12 +61,8 @@ export interface Constraint extends CVariant {
 //////////////////////////
 // COLUMN
 //////////////////////////
-export enum DatatypeAffinity {
-    text = 'text',
-    integer = 'integer',
-}
 
-export enum DatatypeVariant {
+export enum SqlDatatype {
     datetime = 'datetime',
     integer = 'integer',
     nvarchar = 'nvarchar',
@@ -77,12 +73,8 @@ export enum DatatypeVariant {
 }
 
 export interface ColumnDatatype {
-    affinity: DatatypeAffinity;
-    variant: DatatypeVariant;
-}
-
-export enum ColumnDefinitionType {
-    constraint = 'constraint',
+    affinity: SqlDatatype;
+    variant: SqlDatatype;
 }
 
 export enum ColumnDefinitionVariant {
@@ -90,7 +82,7 @@ export enum ColumnDefinitionVariant {
 }
 
 export interface ColumnDefinition {
-    type: ColumnDefinitionType;
+    type: ConstraintType;
     variant: ColumnDefinitionVariant;
 }
 
@@ -134,7 +126,7 @@ export enum InsertDataType {
 
 export interface InsertResultExpression {
     type: InsertDataType;
-    variant: DatatypeVariant;
+    variant: SqlDatatype;
     value: string;
 }
 

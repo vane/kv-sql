@@ -1,20 +1,18 @@
 import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
-import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
-import {KvConstraints} from "./kv.constraints";
-import {DatatypeVariant} from "../../parser/sql.parser.model";
+import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
+import {KvStore} from "./kv.store";
 
 export class KvOpSelect {
-    constructor(private prefix: string, private tb: KVTable) {
-        Logger.debug('KvOpSelect', prefix)
+    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+        Logger.debug('KvOpSelect.constructor', prefix)
     }
 
-    table(tname: string, columns: any[], limit?: any, order?: any[], where?: any) {
-        if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
-        const def: KVTableDef = this.tb.td.defs[tname];
+    table(tname: string, columns: any[], limit?: any, order?: any[], where?: any): KVResultRow[] {
+        const def: KVTableDef = this.tb.get(tname)
         const pk = def.cons.pk
         Logger.debug('KvOpSelect.table', def.cols, columns, 'margin', limit, 'where', where)
         let tlimit = -1
@@ -22,12 +20,18 @@ export class KvOpSelect {
         if (limit?.start) tlimit = parseInt(limit.start.value)
         if (limit?.offset) offset = Math.max(parseInt(limit.offset.value), 0)
         let all = false
+        let cols = []
         for (let col of columns) {
             switch (col.variant) {
                 case 'star':
                     all = true
                     break
                 case 'column':
+                    if (def.idx.indexOf(col.name) == -1) {
+                        const msg = `column "${col.name}" in table "${def.name}"`;
+                        throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, msg);
+                    }
+                    cols.push(col.name);
                     break
                 default: {
                     Logger.warn('KvOpSelect.table', tname, col);
@@ -35,13 +39,13 @@ export class KvOpSelect {
                 }
             }
         }
-        const result = this.selectAll(def, pk, tlimit, offset, where);
+        const result = this.selectAll(def, pk, cols, tlimit, offset, where);
         if (!order) return result;
         if (result.length === 0) return result;
         return this.orderBy(result, order);
     }
 
-    private orderBy(result: {[key:string]: any}, order: any[]) {
+    private orderBy(result: KVResultRow[], order: any[]): KVResultRow[] {
         for (let ord of order) {
             if (!(ord.expression.name in result[0])) {
                 throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, `order by ${ord.expression.name}`)
@@ -65,36 +69,42 @@ export class KvOpSelect {
         return result
     }
 
-    private selectAll(def: KVTableDef, pk: KVTableConsPk, limit: number, offset: number, where?: any): {[key:string]: any}[] {
+    private selectAll(def: KVTableDef, pk: KVTableConsPk, cols: string[], limit: number, offset: number, where?: any): KVResultRow[] {
+        if (!pk.first) return []
         let rows = []
-        let row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${pk.first}`)
+        let row = this.store.getRow(def.id, pk.first)
         while (row && (limit < 0 || rows.length < limit)) {
             // todo fix performance
             if (offset > 0) {
                 offset--;
-                row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${row.next}`)
+                if (!row.next) break
+                row = this.store.getRow(def.id, row.next)
                 continue;
             }
             // map rows to cols
-            const o = {}
+            const o = {_id: row.id}
             row.data.forEach((val, i) => {
                 o[def.idx[i]] = dbEvalValue(val, def.cols[def.idx[i]].type)
                 return o
             })
             if (where) {
-                if (dbEvalWhere(where, o)) rows.push(o)
+                if (dbEvalWhere(where, o)) rows.push(this.filterCols(o, cols))
             } else{
-                rows.push(o)
+                rows.push(this.filterCols(o, cols))
             }
             if (!row.next) break
-            row = this.getRow(`${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${row.next}`)
+
+            row = this.store.getRow(def.id, row.next)
         }
         return rows
     }
 
-    private getRow(key: string): KVRow|undefined {
-        const row = localStorage.getItem(key)
-        if (!row) return undefined;
-        return JSON.parse(row);
+    private filterCols(o: KVResultRow, cols: string[]) {
+        if (cols.length == 0) return o
+        const out = {_id: o._id}
+        for (const col of cols) {
+            out[col] = o[col]
+        }
+        return out
     }
 }

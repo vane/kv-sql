@@ -1,24 +1,17 @@
 import {Logger} from "../../logger";
 import {KVTable} from "./kv.table";
 import {DBError, DBErrorType} from "../db.error";
-import {
-    DatatypeVariant,
-    InsertResult,
-    InsertResultExpression,
-    InsertResultType
-} from "../../parser/sql.parser.model";
+import {InsertResult, InsertResultExpression, InsertResultType, SqlDatatype} from "../../parser/sql.parser.model";
 import {KVRow, KVTableCol, KVTableConsPk, KVTableDef} from "./kv.model";
-import {KvConstraints} from "./kv.constraints";
+import {KvStore} from "./kv.store";
 
 export class KvOpInsert {
-    private store: {[key: string]: KVRow} = {};
-    constructor(private prefix: string, private tb: KVTable) {
-        Logger.debug('KvOpInsert', prefix);
+    constructor(private prefix: string, private tb: KVTable, private store: KvStore) {
+        Logger.debug('KvOpInsert.constructor', prefix);
     }
 
     table(tname: string, results: InsertResult[]) {
-        if (!this.tb.has(tname)) throw new DBError(DBErrorType.TABLE_NOT_EXISTS, tname);
-        const def = this.tb.td.defs[tname];
+        const def = this.tb.get(tname);
         // pk
         const pk = def.cons.pk;
         let pkCol = []
@@ -27,7 +20,7 @@ export class KvOpInsert {
             switch (result.type) {
                 case InsertResultType.expression:
                     if (def.colid !== result.expression.length) {
-                        Logger.warn('KVOp.insertTable', result.expression.length, this.tb.td.defs[tname].id);
+                        Logger.warn('KVOp.insertTable', result.expression.length, def.id);
                         throw new DBError(DBErrorType.INSERT_ROW_SIZE, `${result.expression.length} != ${def.colid}`);
                     }
                     const row = [];
@@ -35,7 +28,7 @@ export class KvOpInsert {
                     for (let key: string in def.cols) {
                         const col = def.cols[key];
                         const res = result.expression[col.id - 1];
-                        this.evaluateValue(def, def.cols[key], res);
+                        this.validateColumnValue(def, def.cols[key], res);
                         // pk
                         if (pkCol.includes(key)) rowId = this.evaluatePk(pkCol, key, res.value, rowId);
                         row.push(res.value);
@@ -61,32 +54,32 @@ export class KvOpInsert {
         return rowId + value;
     }
 
-    private evaluateValue(def: KVTableDef, col: KVTableCol, res: InsertResultExpression) {
+    private validateColumnValue(def: KVTableDef, col: KVTableCol, res: InsertResultExpression) {
         // TODO validate constraints in KVTableDef
-        switch (res.variant) {
-            case DatatypeVariant.decimal: {
-                if (col.type === DatatypeVariant.integer) return true;
-                if (col.type === DatatypeVariant.numeric) return true;
+        switch (res.variant.toLowerCase()) {
+            case SqlDatatype.decimal: {
+                if (col.type.toLowerCase() === SqlDatatype.integer) return true;
+                if (col.type.toLowerCase() === SqlDatatype.numeric) return true;
             }
-            case DatatypeVariant.text: {
-                if (col.type === DatatypeVariant.nvarchar) return true;
+            case SqlDatatype.text: {
+                if (col.type.toLowerCase() === SqlDatatype.nvarchar) return true;
                 // TODO validate datetime value
-                if (col.type === DatatypeVariant.datetime) return true;
+                if (col.type.toLowerCase() === SqlDatatype.datetime) return true;
             }
-            case DatatypeVariant.null: {
+            case SqlDatatype.null: {
                 if (!col.notNull) return true;
             }
             default: {
-                Logger.warn('KVOp.evaluateValue', col, res);
+                Logger.warn('KvOpInsert.evaluateValue', col, res);
                 throw new DBError(DBErrorType.NOT_IMPLEMENTED, `got ${res.variant} expected ${col.type}`);
             }
         }
     }
 
     private insertRow(def: KVTableDef, rowId: string, data: string[], pk: KVTableConsPk): KVRow {
-        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${rowId}`
-        const row = {data, id: rowId}
-        this.store[key] = row
+        if (this.store.hasRow(def.id, rowId)) throw new DBError(DBErrorType.KEY_VIOLATION, `${rowId}`)
+        const row: KVRow = {data, id: rowId, prev: pk.id}
+        this.store.setRow(def.id, rowId, row);
         // current id
         pk.id = rowId;
         if (!pk.first) pk.first = rowId;
@@ -94,24 +87,17 @@ export class KvOpInsert {
     }
 
     private updateNext(def: KVTableDef, pk: KVTableConsPk, next: string) {
-        if (!pk.id) return;
-        const key = `${this.prefix}_${KvConstraints.TABLE}${def.id}_${KvConstraints.ROW}${pk.id}`
-        const row = this.store[key]
-        row.next = next
-        this.store[key] = row
-    }
-
-    commit() {
-        for(let key in this.store) {
-            localStorage.setItem(key, JSON.stringify(this.store[key]));
+        if (!pk.id) {
+            Logger.warn('KvOpInsert.updateNext empty id', pk.id, def.name, next)
+            return;
         }
-    }
 
-    rollback() {
-        this.store = {};
-    }
-
-    dump() {
-        return this.store;
+        const row = this.store.getRow(def.id, pk.id)
+        if (!row) {
+            Logger.warn('KvOpInsert.updateNext empty row', pk, def, next)
+            throw new DBError(DBErrorType.ROW_NOT_EXISTS, `table "${def.name}" id "${pk.id}" next "${next}"`)
+        }
+        row.next = next
+        this.store.setRow(def.id, row.id, row)
     }
 }

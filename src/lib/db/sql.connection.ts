@@ -1,18 +1,19 @@
 import {asyncParser} from "../parser/async.parser";
 import {Logger} from "../logger";
-import {KVStore} from "./kv/kv.store";
+import {KvOp} from "./kv/kv.op";
 import {createTableStmt} from "./stmt/create.table.stmt";
 import {DBError, DBErrorType} from "./db.error";
 import {insertStmt} from "./stmt/insert.stmt";
 import {Benchmark} from "../benchmark";
 import {selectStmt} from "./stmt/select.stmt";
 import {updateStmt} from "./stmt/update.stmt";
+import {deleteStmt} from "./stmt/delete.stmt";
 
 export class SQLConnection {
-    private readonly kv: KVStore;
+    private readonly kv: KvOp;
 
     constructor(private prefix: string) {
-        this.kv = new KVStore(prefix);
+        this.kv = new KvOp(prefix);
     }
 
     async execute(query: string) {
@@ -41,12 +42,13 @@ export class SQLConnection {
     }
 
     private executeStmt(q: any): any {
-        switch (q.variant) {
+        switch (q.variant.toLowerCase()) {
             case 'transaction': {
                 return this.resolveTx(q);
             }
             case 'create': {
-                if (q.format === 'table') return createTableStmt(q, this.kv);
+                if (q.format.toLowerCase() === 'table') return createTableStmt(q, this.kv);
+                Logger.warn(`Unsupported create format ${q.format}`, q)
                 break;
             }
             case 'insert': {
@@ -57,6 +59,9 @@ export class SQLConnection {
             }
             case 'update': {
                 return updateStmt(q, this.kv);
+            }
+            case 'delete': {
+                return deleteStmt(q, this.kv);
             }
             default: {
                 Logger.warn(`Unsupported statement type ${q.variant}`, q)
