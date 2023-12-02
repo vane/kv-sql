@@ -10,7 +10,7 @@ Files from external repositories or websites:
 
 ### generate parser
 
-generate typescript file `gen/sqlite.parser.ts`
+generate peg parser typescript file `gen/sqlite.parser.ts`
 ```shell
 npm run generate
 ```
