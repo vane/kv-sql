@@ -5,7 +5,10 @@ import {DBError, DBErrorType} from "../db.error";
 export const alterTableStmt = (q: any, kv: KvOp) => {
     switch (q.action) {
         case 'drop': {
-            if (q.target.variant == 'table' && q.definition.variant == 'column') return kv.drop.column(q)
+            if (q.target.variant == 'table' && q.definition.variant == 'column') return kv.alter.dropColumn(q)
+        }
+        case 'add': {
+            if (q.target.variant == 'table' && q.definition.variant === 'column') return kv.table.addColumn(q)
         }
         default: {
             Logger.warn('alterTableStmt', q);

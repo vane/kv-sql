@@ -3,9 +3,11 @@ import {KvConstraints} from "./kv.constraints";
 import {
     Column,
     ColumnDefinitionVariant,
-    Constraint, ConstraintAction,
-    ConstraintVariant, ConstraintDefinition,
+    Constraint,
+    ConstraintAction,
+    ConstraintDefinition,
     ConstraintDefinitionVariant,
+    ConstraintVariant,
     CVariant,
     SqlDatatype,
     VariantDefinition,
@@ -60,6 +62,17 @@ export class KVTable {
         this.op.special.addTable(name)
     }
 
+    addColumn(q: any) {
+        // alter table customers add column Address text not null default ''
+        Logger.debug('KVTable.addColumn', q);
+        const def = this.get(q.target.name);
+        if (def.cols[q.definition.name])
+            throw new DBError(DBErrorType.COLUMN_EXISTS, `column "${q.definition.name}" exists in table "${def.name}"`);
+        ++def.colid;
+        const col = this.createColumn(q.definition, def.colid);
+        this.op.alter.addColumn(def, col);
+    }
+
     commit() {
         localStorage.setItem(this.tdPrefix, JSON.stringify(this.td));
     }
@@ -109,22 +122,16 @@ export class KVTable {
     }
 
     private createColumn(col: Column, id: number):KVTableCol  {
-        switch (col.datatype.variant.toLowerCase()) {
-            case SqlDatatype.datetime:
-            case SqlDatatype.integer:
-            case SqlDatatype.numeric:
-            case SqlDatatype.nvarchar:
-                break
-            default: {
-                Logger.debug('createColumn', col);
-                throw new DBError(DBErrorType.NOT_IMPLEMENTED, col.datatype.variant)
-            }
-        }
+        this.validateColumnVariant(col)
         let notNull = false;
+        let defaultValue = undefined;
         for (let def of col.definition) {
             switch (def.variant.toLowerCase()) {
                 case ColumnDefinitionVariant.not_null:
                     notNull = true;
+                    break;
+                case ColumnDefinitionVariant.default:
+                    defaultValue = def.value?.value;
                     break;
                 default: {
                     Logger.debug('createColumn.def', col.name, def);
@@ -132,7 +139,7 @@ export class KVTable {
                 }
             }
         }
-        return {id, type: col.datatype.variant, name: col.name, notNull};
+        return {id, type: col.datatype.variant, name: col.name, notNull, defaultValue};
     }
 
     private createConstraint(def: KVTableDef, cons: Constraint, id: number): KVTableCons|undefined {
@@ -199,5 +206,20 @@ export class KVTable {
             }
         }
         return fk;
+    }
+
+    private validateColumnVariant(col: Column) {
+        switch (col.datatype.variant.toLowerCase()) {
+            case SqlDatatype.datetime:
+            case SqlDatatype.integer:
+            case SqlDatatype.numeric:
+            case SqlDatatype.nvarchar:
+            case SqlDatatype.text:
+                break
+            default: {
+                Logger.debug('createColumn', col);
+                throw new DBError(DBErrorType.NOT_IMPLEMENTED, col.datatype.variant)
+            }
+        }
     }
 }

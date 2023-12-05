@@ -79,11 +79,13 @@ export interface ColumnDatatype {
 
 export enum ColumnDefinitionVariant {
     not_null = 'not null',
+    default = 'default',
 }
 
 export interface ColumnDefinition {
     type: ConstraintType;
     variant: ColumnDefinitionVariant;
+    value?: InsertResultExpression;
 }
 
 export enum VariantDefinition {

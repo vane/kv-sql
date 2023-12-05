@@ -2,6 +2,8 @@ import {KvOpDelete} from "./kv.op.delete";
 import {KvOpInsert} from "./kv.op.insert";
 import {KvOpSelect} from "./kv.op.select";
 import {KvOpUpdate} from "./kv.op.update";
+import {KvOpAlter} from "./kv.op.alter";
+import {KvSpecial} from "./kv.special";
 import {KvStore} from "./kv.store";
 import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
@@ -10,9 +12,7 @@ import {insertStmt} from "../stmt/insert.stmt";
 import {selectStmt} from "../stmt/select.stmt";
 import {updateStmt} from "../stmt/update.stmt";
 import {deleteStmt} from "../stmt/delete.stmt";
-import {KvSpecial} from "./kv.special";
 import {alterTableStmt} from "../stmt/alter.table.stmt";
-import {KvOpDrop} from "./kv.op.drop";
 
 
 export class KvOp {
@@ -23,7 +23,7 @@ export class KvOp {
     readonly select: KvOpSelect;
     readonly update: KvOpUpdate;
     readonly delete: KvOpDelete;
-    readonly drop: KvOpDrop;
+    readonly alter: KvOpAlter;
 
     constructor(private prefix: string) {
         Logger.debug('KvOp.constructor', prefix);
@@ -34,7 +34,7 @@ export class KvOp {
         this.select = new KvOpSelect(prefix, this);
         this.update = new KvOpUpdate(prefix, this);
         this.delete = new KvOpDelete(prefix, this);
-        this.drop = new KvOpDrop(prefix, this);
+        this.alter = new KvOpAlter(prefix, this);
     }
 
     begin() {

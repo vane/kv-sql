@@ -40,6 +40,22 @@ npm run generate
 
 ### sample working sql queries
 
+create  
+```sql
+CREATE TABLE IF NOT EXISTS "foo" (
+   "id" INTEGER NOT NULL,
+   "bar" NVARCHAR(160) NOT NULL,
+   "foobar" TEXT NOT NULL,
+   PRIMARY KEY("id" AUTOINCREMENT)
+);
+```
+
+alter  
+```sql
+alter table customers drop column Address;
+alter table customers add column Address text not null default '';
+```
+
 insert
 ```sql
 insert into artists VALUES (276, 'foo');
