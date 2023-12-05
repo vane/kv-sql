@@ -880,7 +880,7 @@ stmt_release "RELEASE Statement"
   }
 
 stmt_alter "ALTER TABLE Statement"
-  = s:( alter_start ) n:( id_table ) o e:( alter_action ) o
+  = s:( alter_start ) n:( id_table ) o e:( alter_action )
   {
     return Object.assign({
       'type': 'statement',
@@ -895,6 +895,7 @@ alter_start "ALTER TABLE Keyword"
 
 alter_action
   = alter_action_rename
+  / alter_action_rename_column
   / alter_action_add
   / alter_action_drop
 
@@ -907,12 +908,22 @@ alter_action_rename "RENAME TO Keyword"
     };
   }
 
+alter_action_rename_column "RENAME COLUMN Keyword TO Keyword"
+   = s:( RENAME ) o ( action_add_modifier ) n1:(id_column) o TO n2:( id_column )
+   {
+     return {
+       'action': keyNode(s),
+       'oldName': n1,
+       'newName': n2
+     };
+   }
+
 alter_action_drop "DROP COLUMN Keyword"
-  = s:( DROP ) o ( action_add_modifier )? d:( source_def_column )
+  = s:( DROP ) o ( action_add_modifier ) n:(id_column)
   {
     return {
       'action': keyNode(s),
-      'definition': d
+      'name': n
     };
   }
 

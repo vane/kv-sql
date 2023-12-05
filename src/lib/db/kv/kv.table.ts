@@ -74,6 +74,19 @@ export class KVTable {
         this.op.alter.addColumn(def, col);
     }
 
+    renameColumn(q: any) {
+        // alter table customers rename column FirstName to First
+        Logger.debug('KVTable.renameColumn', q);
+        const def = this.get(q.target.name);
+        if (!def.cols[q.oldName.name])
+            throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, `column "${q.definition.name}" not exists in table "${def.name}"`);
+        const col = def.cols[q.oldName.name];
+        delete def.cols[q.oldName.name];
+        col.name = q.newName.name;
+        def.idx[col.id - 1] = q.newName.name;
+        def.cols[q.newName.name] = col;
+    }
+
     drop(q: any) {
         // drop table foo;
         Logger.debug('KVTable.drop', q)

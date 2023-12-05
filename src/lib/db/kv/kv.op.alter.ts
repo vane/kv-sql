@@ -11,9 +11,9 @@ export class KvOpAlter {
     dropColumn(q: any) {
         // alter table customers drop column Address
         const def = this.op.table.get(q.target.name);
-        if (!def.cols[q.definition.name])
-            throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, `"${q.definition.name}" in table "${q.target.name}"`);
-        const col = def.cols[q.definition.name]
+        if (!def.cols[q.name.name])
+            throw new DBError(DBErrorType.COLUMN_NOT_EXISTS, `"${q.name.name}" in table "${q.target.name}"`);
+        const col = def.cols[q.name.name]
         Logger.debug('KvOpDrop.column', def);
         this.alterDropColumns(def, col.id)
         this.alterDropData(def, def.cons.pk, col.id - 1);
