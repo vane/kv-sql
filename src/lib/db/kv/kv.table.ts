@@ -108,9 +108,9 @@ export class KVTable {
         // drop table foo;
         Logger.debug('KVTable.drop', q)
         const def = this.get(q.target.name);
-        if (def.name === KvSpecial.tableName) throw new DBError(DBErrorType.DROP_TABLE_ERROR, `Cannot drop special table "${def.name}"`)
+        if (def.name === KvSpecial.tableName) throw new DBError(DBErrorType.TABLE_DROP_ERROR, `Cannot drop special table "${def.name}"`)
         this.op.alter.dropData(def);
-        if (!this.op.special.dropTable(def)) throw new DBError(DBErrorType.DROP_TABLE_ERROR, `KVTable.drop special.dropTable error "${def.name}"`);
+        if (!this.op.special.dropTable(def)) throw new DBError(DBErrorType.TABLE_DROP_ERROR, `KVTable.drop special.dropTable error "${def.name}"`);
         delete this.td.defs[def.name];
         Logger.debug('KVTable.drop defs', Object.values(this.td.defs).map(t => {return {id: t.id, name: t.name}}));
         return 1;
