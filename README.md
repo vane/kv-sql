@@ -55,6 +55,7 @@ alter
 alter table customers drop column Address;
 alter table customers add column Address text not null default '';
 alter table customers rename column FirstName to First;
+alter table customers rename to customers2;
 ```
 
 drop  

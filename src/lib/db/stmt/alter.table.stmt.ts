@@ -11,11 +11,28 @@ export const alterTableStmt = (q: any, kv: KvOp) => {
             if (q.target.variant == 'table' && q.definition.variant === 'column') return kv.table.addColumn(q)
         }
         case 'rename': {
-            if (q.variant == 'alter table') return kv.table.renameColumn(q)
+            return rename(q, kv)
         }
         default: {
             Logger.warn('alterTableStmt', q);
             throw new DBError(DBErrorType.NOT_IMPLEMENTED, `alterTableStmt ${q.action}`)
+        }
+    }
+}
+
+const rename = (q: any, kv: KvOp) => {
+    if (q.variant !== 'alter table')
+        throw new DBError(DBErrorType.NOT_IMPLEMENTED, `alterTableStmt variant ${q.variant}`)
+    switch (q.action) {
+        case 'rename column': {
+            return kv.table.renameColumn(q)
+        }
+        case 'rename': {
+            return kv.table.rename(q)
+        }
+        default: {
+            Logger.warn('alterTableStmt', q);
+            throw new DBError(DBErrorType.NOT_IMPLEMENTED, `alterTableStmt rename ${q.action}`)
         }
     }
 }

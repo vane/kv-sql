@@ -33,6 +33,10 @@ export class KVTable {
         return this.td.defs[tname];
     }
 
+    getColumnIndex(def: KVTableDef, columnName: string): number {
+        return def.idx.indexOf(columnName)
+    }
+
     getId(tableId: number): KVTableDef {
         for (let key in this.td.defs) {
             const t = this.td.defs[key];
@@ -85,6 +89,19 @@ export class KVTable {
         col.name = q.newName.name;
         def.idx[col.id - 1] = q.newName.name;
         def.cols[q.newName.name] = col;
+    }
+
+    rename(q: any) {
+        // alter table customers rename to customers2
+        Logger.debug('KVTable.rename', q.target.name, 'new name', q.name.name)
+        const def = this.get(q.target.name);
+
+        delete this.td.defs[q.target.name];
+
+        def.name = q.name.name
+        this.td.defs[def.name] = def
+
+        this.op.special.renameTable(q.target.name, q.name.name)
     }
 
     drop(q: any) {

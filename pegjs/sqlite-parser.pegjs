@@ -11,7 +11,7 @@
   }
 
   function isOkay(obj) {
-    return obj != null;
+    return obj != null || obj != undefined;
   }
 
   function foldString(parts, glue = ' ') {
@@ -909,10 +909,10 @@ alter_action_rename "RENAME TO Keyword"
   }
 
 alter_action_rename_column "RENAME COLUMN Keyword TO Keyword"
-   = s:( RENAME ) o ( action_add_modifier ) n1:(id_column) o TO n2:( id_column )
+   = s:( RENAME ) o f:( action_add_modifier )? n1:(id_column) o TO n2:( id_column )
    {
      return {
-       'action': keyNode(s),
+       'action': foldStringKey([s, f]),
        'oldName': n1,
        'newName': n2
      };

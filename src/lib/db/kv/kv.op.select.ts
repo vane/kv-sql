@@ -1,6 +1,6 @@
 import {Logger} from "../../logger";
 import {DBError, DBErrorType} from "../db.error";
-import {KVResultRow, KVTableConsPk, KVTableDef} from "./kv.model";
+import {KVResultRow, KVRow, KVTableConsPk, KVTableDef} from "./kv.model";
 import {dbEvalValue} from "../fn/db.eval.value";
 import {dbEvalWhere} from "../fn/db.eval.where";
 import {KvOp} from "./kv.op";
@@ -49,6 +49,20 @@ export class KvOpSelect {
         }
         if (tlimit > 0) return result.slice(0, Math.min(tlimit, result.length))
         return result
+    }
+
+    kvRow(tname: string, columnName: string, value: string): KVRow|undefined {
+        const def: KVTableDef = this.op.table.get(tname)
+        const idx = def.idx.indexOf(columnName);
+        if (idx === -1) return undefined;
+        if (!def.cons.pk.first) return undefined;
+        let row = this.op.store.getRow(def.id, def.cons.pk.first)
+        while (row) {
+            if (row.data[idx] === value) return row
+            if (!row.next) break
+            row = this.op.store.getRow(def.id, row.next)
+        }
+        return undefined;
     }
 
     private orderBy(result: KVResultRow[], order: any[]): KVResultRow[] {

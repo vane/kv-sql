@@ -696,9 +696,9 @@ function peg$parse(input: string, options?: ParseOptions) {
       };
     };
   const peg$c155 = peg$otherExpectation("RENAME COLUMN Keyword TO Keyword");
-  const peg$c156 = function(s: any, n1: any, n2: any): any {
+  const peg$c156 = function(s: any, f: any, n1: any, n2: any): any {
        return {
-         'action': keyNode(s),
+         'action': foldStringKey([s, f]),
          'oldName': n1,
          'newName': n2
        };
@@ -6396,6 +6396,9 @@ function peg$parse(input: string, options?: ParseOptions) {
       s2 = peg$parseo();
       if (s2 as any !== peg$FAILED) {
         s3 = peg$parseaction_add_modifier();
+        if (s3 as any === peg$FAILED) {
+          s3 = null;
+        }
         if (s3 as any !== peg$FAILED) {
           s4 = peg$parseid_column();
           if (s4 as any !== peg$FAILED) {
@@ -6406,7 +6409,7 @@ function peg$parse(input: string, options?: ParseOptions) {
                 s7 = peg$parseid_column();
                 if (s7 as any !== peg$FAILED) {
                   peg$savedPos = s0;
-                  s1 = peg$c156(s1, s4, s7);
+                  s1 = peg$c156(s1, s3, s4, s7);
                   s0 = s1;
                 } else {
                   peg$currPos = s0;
@@ -22825,7 +22828,7 @@ function peg$parse(input: string, options?: ParseOptions) {
     }
 
     function isOkay(obj) {
-      return obj != null;
+      return obj != null || obj != undefined;
     }
 
     function foldString(parts, glue = ' ') {

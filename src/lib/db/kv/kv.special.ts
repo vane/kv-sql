@@ -44,12 +44,24 @@ export class KvSpecial {
         return tables;
     }
 
+    renameTable(oldName: string, newName: string) {
+        Logger.debug('KvSpecial.renameTable', oldName, newName);
+
+        const special = this.op.table.get(KvSpecial.tableName)
+        const row = this.op.select.kvRow(KvSpecial.tableName, 'name', oldName)
+        if (!row) throw new DBError(DBErrorType.ROW_NOT_EXISTS, `table "${KvSpecial.tableName}" name "${oldName}"`)
+
+        row.data[this.op.table.getColumnIndex(special, 'name')] = newName
+        row.data[this.op.table.getColumnIndex(special, 'tbl_name')] = newName
+        this.op.store.setRow(special.id, row.id, row)
+    }
+
     dropTable(def: KVTableDef) {
         const defs = this.op.select.table(KvSpecial.tableName, KvOpSelect.STAR);
         const trow = defs.filter(d => d.name == def.name);
         Logger.debug('KvSpecial.dropTable', trow);
 
-        if (trow.length !== 1) throw new DBError(DBErrorType.DROP_TABLE_ERROR, `table "${def.name}" definition not found`);
+        if (trow.length !== 1) throw new DBError(DBErrorType.TABLE_DROP_ERROR, `table "${def.name}" definition not found`);
 
         const special = this.op.table.get(KvSpecial.tableName)
         return this.op.store.delRow(special.id, trow[0].id);
