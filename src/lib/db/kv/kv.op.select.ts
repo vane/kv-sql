@@ -7,6 +7,7 @@ import {KvOp} from "./kv.op";
 import {dbColsFilter} from "../fn/db.cols.filter";
 
 export class KvOpSelect {
+    static readonly STAR = [{variant: 'star'}]
     constructor(private prefix: string, private op: KvOp) {
         Logger.debug('KvOpSelect.constructor', prefix)
     }

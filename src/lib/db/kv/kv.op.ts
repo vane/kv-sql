@@ -11,6 +11,8 @@ import {selectStmt} from "../stmt/select.stmt";
 import {updateStmt} from "../stmt/update.stmt";
 import {deleteStmt} from "../stmt/delete.stmt";
 import {KvSpecial} from "./kv.special";
+import {alterTableStmt} from "../stmt/alter.table.stmt";
+import {KvOpDrop} from "./kv.op.drop";
 
 
 export class KvOp {
@@ -21,6 +23,7 @@ export class KvOp {
     readonly select: KvOpSelect;
     readonly update: KvOpUpdate;
     readonly delete: KvOpDelete;
+    readonly drop: KvOpDrop;
 
     constructor(private prefix: string) {
         Logger.debug('KvOp.constructor', prefix);
@@ -31,6 +34,7 @@ export class KvOp {
         this.select = new KvOpSelect(prefix, this);
         this.update = new KvOpUpdate(prefix, this);
         this.delete = new KvOpDelete(prefix, this);
+        this.drop = new KvOpDrop(prefix, this);
     }
 
     begin() {
@@ -58,6 +62,8 @@ export class KvOp {
                 Logger.warn(`Unsupported create format ${q.format}`, q)
                 break;
             }
+            case 'alter table':
+                return alterTableStmt(q, this);
             case 'insert': {
                 return insertStmt(q, this);
             }

@@ -11,7 +11,7 @@ export class SQLConnection {
         this.kv = new KvOp(prefix);
     }
 
-    async execute(query: string) {
+    async execute(query: string, commit = true) {
         Benchmark.start('SQLConnection.asyncParser');
         const ast = await asyncParser(query);
         Benchmark.stop('SQLConnection.asyncParser');
@@ -31,7 +31,7 @@ export class SQLConnection {
         Benchmark.stop('SQLConnection.executeStmt', `${ast.statement.length} rows`);
 
         Benchmark.start('kv.commit');
-        this.kv.commit()
+        if (commit) this.kv.commit()
         Benchmark.stop('kv.commit');
         return res
     }
