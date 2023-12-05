@@ -896,6 +896,7 @@ alter_start "ALTER TABLE Keyword"
 alter_action
   = alter_action_rename
   / alter_action_add
+  / alter_action_drop
 
 alter_action_rename "RENAME TO Keyword"
   = s:( RENAME ) o TO o n:( id_table )
@@ -903,6 +904,15 @@ alter_action_rename "RENAME TO Keyword"
     return {
       'action': keyNode(s),
       'name': n
+    };
+  }
+
+alter_action_drop "DROP COLUMN Keyword"
+  = s:( DROP ) o ( action_add_modifier )? d:( source_def_column )
+  {
+    return {
+      'action': keyNode(s),
+      'definition': d
     };
   }
 
