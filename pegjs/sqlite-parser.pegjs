@@ -11,7 +11,7 @@
   }
 
   function isOkay(obj) {
-    return obj != null;
+    return obj != null || obj != undefined;
   }
 
   function foldString(parts, glue = ' ') {
@@ -880,7 +880,7 @@ stmt_release "RELEASE Statement"
   }
 
 stmt_alter "ALTER TABLE Statement"
-  = s:( alter_start ) n:( id_table ) o e:( alter_action ) o
+  = s:( alter_start ) n:( id_table ) o e:( alter_action )
   {
     return Object.assign({
       'type': 'statement',
@@ -895,10 +895,31 @@ alter_start "ALTER TABLE Keyword"
 
 alter_action
   = alter_action_rename
+  / alter_action_rename_column
   / alter_action_add
+  / alter_action_drop
 
 alter_action_rename "RENAME TO Keyword"
   = s:( RENAME ) o TO o n:( id_table )
+  {
+    return {
+      'action': keyNode(s),
+      'name': n
+    };
+  }
+
+alter_action_rename_column "RENAME COLUMN Keyword TO Keyword"
+   = s:( RENAME ) o f:( action_add_modifier )? n1:(id_column) o TO n2:( id_column )
+   {
+     return {
+       'action': foldStringKey([s, f]),
+       'oldName': n1,
+       'newName': n2
+     };
+   }
+
+alter_action_drop "DROP COLUMN Keyword"
+  = s:( DROP ) o ( action_add_modifier ) n:(id_column)
   {
     return {
       'action': keyNode(s),

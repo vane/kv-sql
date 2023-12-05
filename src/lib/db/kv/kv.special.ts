@@ -1,7 +1,9 @@
 import {KvOp} from "./kv.op";
 import {Logger} from "../../logger";
-import {KVTableCol, KVTableConsPk, KVTables} from "./kv.model";
+import {KVTableCol, KVTableConsPk, KVTableDef, KVTables} from "./kv.model";
 import {InsertDataType, InsertResultType, InsertResultVariant, SqlDatatype} from "../../parser/sql.parser.model";
+import {KvOpSelect} from "./kv.op.select";
+import {DBError, DBErrorType} from "../db.error";
 
 interface SpecialCol {
     name: string
@@ -9,7 +11,7 @@ interface SpecialCol {
 }
 
 export class KvSpecial {
-    private tableName = 'sqlite_schema'
+    static readonly tableName = 'sqlite_schema'
     private tableCols: SpecialCol[] = [{
         name: 'id',
         type: SqlDatatype.integer
@@ -42,13 +44,36 @@ export class KvSpecial {
         return tables;
     }
 
+    renameTable(oldName: string, newName: string) {
+        Logger.debug('KvSpecial.renameTable', oldName, newName);
+
+        const special = this.op.table.get(KvSpecial.tableName)
+        const row = this.op.select.kvRow(KvSpecial.tableName, 'name', oldName)
+        if (!row) throw new DBError(DBErrorType.ROW_NOT_EXISTS, `table "${KvSpecial.tableName}" name "${oldName}"`)
+
+        row.data[this.op.table.getColumnIndex(special, 'name')] = newName
+        row.data[this.op.table.getColumnIndex(special, 'tbl_name')] = newName
+        this.op.store.setRow(special.id, row.id, row)
+    }
+
+    dropTable(def: KVTableDef) {
+        const defs = this.op.select.table(KvSpecial.tableName, KvOpSelect.STAR);
+        const trow = defs.filter(d => d.name == def.name);
+        Logger.debug('KvSpecial.dropTable', trow);
+
+        if (trow.length !== 1) throw new DBError(DBErrorType.TABLE_DROP_ERROR, `table "${def.name}" definition not found`);
+
+        const special = this.op.table.get(KvSpecial.tableName)
+        return this.op.store.delRow(special.id, trow[0].id);
+    }
+
     addTable(tname: string) {
-        const def = this.op.table.getId(1)
+        const def = this.op.table.get(KvSpecial.tableName)
         let id = '1'
         if (def.cons.pk.id) {
             id = (parseInt(def.cons.pk.id)+1).toString()
         }
-        this.op.insert.table(this.tableName, [{
+        this.op.insert.table(KvSpecial.tableName, [{
             type: InsertResultType.expression,
             variant: InsertResultVariant.list,
             expression: [{
@@ -83,9 +108,9 @@ export class KvSpecial {
         ++tables.id
         const pk: KVTableConsPk = {auto: true, name: 'id', cname: ['id']}
         const colData = this.initCols()
-        tables.defs[this.tableName] = {
+        tables.defs[KvSpecial.tableName] = {
             id: tables.id,
-            name: this.tableName,
+            name: KvSpecial.tableName,
             conid: 0,
             colid: colData.id,
             cons: {defs: {}, pk},

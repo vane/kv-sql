@@ -2,6 +2,24 @@
 
 aim for this project is to parse sqlite ast -> write | read data -> to | from -> browser local storage / kv storage
 
+### design
+sql parsing is done in separate thread - it doesn't freeze ui 
+- see `lib/parser/parser.worker.ts` and `lib/parser/async.parser.ts`  
+
+data in rows is stored as doubly linked list  
+data in tables is stored in one key  
+all keys are prefixed by database name  
+if something is not implemented it should throw `DBError` with type `DBErrorType`->`NOT_IMPLEMENTED`
+- see `lib/db/db.error.ts`
+
+### TODO   
+- insert primary key autoincrement
+- validate constraints on insert
+- validate constraints on delete
+- select insert from other table
+- select joins
+- execute statements in separate thread
+
 ### external files
 
 Files from external repositories or websites:  
@@ -21,6 +39,29 @@ npm run generate
 2. click clear data to clear `localStorage` from keys
 
 ### sample working sql queries
+
+create  
+```sql
+CREATE TABLE IF NOT EXISTS "foo" (
+   "id" INTEGER NOT NULL,
+   "bar" NVARCHAR(160) NOT NULL,
+   "foobar" TEXT NOT NULL,
+   PRIMARY KEY("id" AUTOINCREMENT)
+);
+```
+
+alter  
+```sql
+alter table customers drop column Address;
+alter table customers add column Address text not null default '';
+alter table customers rename column FirstName to First;
+alter table customers rename to customers2;
+```
+
+drop  
+```sql
+drop table foo;
+```
 
 insert
 ```sql

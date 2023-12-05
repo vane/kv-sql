@@ -2,6 +2,8 @@ import {KvOpDelete} from "./kv.op.delete";
 import {KvOpInsert} from "./kv.op.insert";
 import {KvOpSelect} from "./kv.op.select";
 import {KvOpUpdate} from "./kv.op.update";
+import {KvOpAlter} from "./kv.op.alter";
+import {KvSpecial} from "./kv.special";
 import {KvStore} from "./kv.store";
 import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
@@ -10,7 +12,8 @@ import {insertStmt} from "../stmt/insert.stmt";
 import {selectStmt} from "../stmt/select.stmt";
 import {updateStmt} from "../stmt/update.stmt";
 import {deleteStmt} from "../stmt/delete.stmt";
-import {KvSpecial} from "./kv.special";
+import {alterTableStmt} from "../stmt/alter.table.stmt";
+import {dropTableStmt} from "../stmt/drop.table.stmt";
 
 
 export class KvOp {
@@ -21,6 +24,7 @@ export class KvOp {
     readonly select: KvOpSelect;
     readonly update: KvOpUpdate;
     readonly delete: KvOpDelete;
+    readonly alter: KvOpAlter;
 
     constructor(private prefix: string) {
         Logger.debug('KvOp.constructor', prefix);
@@ -31,6 +35,7 @@ export class KvOp {
         this.select = new KvOpSelect(prefix, this);
         this.update = new KvOpUpdate(prefix, this);
         this.delete = new KvOpDelete(prefix, this);
+        this.alter = new KvOpAlter(prefix, this);
     }
 
     begin() {
@@ -58,6 +63,10 @@ export class KvOp {
                 Logger.warn(`Unsupported create format ${q.format}`, q)
                 break;
             }
+            case 'alter table':
+                return alterTableStmt(q, this);
+            case 'drop':
+                return dropTableStmt(q, this);
             case 'insert': {
                 return insertStmt(q, this);
             }
@@ -71,7 +80,7 @@ export class KvOp {
                 return deleteStmt(q, this);
             }
             default: {
-                Logger.warn(`Unsupported statement type ${q.variant}`, q)
+                Logger.warn(`KvOp.execute unsupported statement type ${q.variant}`, q)
             }
         }
         return undefined;

@@ -36,6 +36,7 @@ export interface KVTableCol {
     name: string;
     type: SqlDatatype;
     notNull: boolean;
+    defaultValue?: string;
 }
 
 export interface KVTableDef {

@@ -1,6 +1,5 @@
 import {KVRow} from "./kv.model";
 import {KvConstraints} from "./kv.constraints";
-import {KVTable} from "./kv.table";
 import {Logger} from "../../logger";
 import {KvOp} from "./kv.op";
 
@@ -21,38 +20,7 @@ export class KvStore {
         for(let key in this.data) {
             localStorage.setItem(key, JSON.stringify(this.data[key]));
         }
-        for (let d of this.deleted) {
-            const row = this.getRow(d.tableId, d.rowId)
-            const t = this.op.table.getId(d.tableId);
-            if (t.cons.pk.first == d.rowId) {
-                t.cons.pk.first = row?.next
-            }
-            // fix double linked list
-            if (row && row.next && row.prev) { // fix in the middle
-                const next = this.getRow(d.tableId, row.next);
-                const prev = this.getRow(d.tableId, row.prev);
-                if (next && prev) {
-                    next.prev = prev.id
-                    prev.next = next.id
-                    localStorage.setItem(this.rowKey(d.tableId, prev.id), JSON.stringify(prev))
-                    localStorage.setItem(this.rowKey(d.tableId, next.id), JSON.stringify(next))
-                }
-            } else if (row && row.prev) { // fix last
-                const prev = this.getRow(d.tableId, row.prev);
-                if (prev) {
-                    prev.next = undefined;
-                    localStorage.setItem(this.rowKey(d.tableId, prev.id), JSON.stringify(prev))
-                }
-            } else if (row && row.next) { // fix first
-                const next = this.getRow(d.tableId, row.next);
-                if (next) {
-                    next.prev = undefined;
-                    localStorage.setItem(this.rowKey(d.tableId, next.id), JSON.stringify(next))
-                }
-            }
-            const key = this.rowKey(d.tableId, d.rowId)
-            localStorage.removeItem(key)
-        }
+        this.commitDeleted();
     }
 
     rollback() {
@@ -95,5 +63,44 @@ export class KvStore {
 
     private rowKey(tableId: number, rowId: string): string {
         return `${this.prefix}_${KvConstraints.TABLE}${tableId}_${KvConstraints.ROW}${rowId}`
+    }
+
+    private commitDeleted() {
+        for (let d of this.deleted) {
+            const row = this.getRow(d.tableId, d.rowId)
+            const t = this.op.table.getId(d.tableId);
+            if (!t) { // table not found so just delete all rows because we dropped table
+                const key = this.rowKey(d.tableId, d.rowId)
+                localStorage.removeItem(key);
+                continue;
+            } else if (t.cons.pk.first == d.rowId) {
+                t.cons.pk.first = row?.next
+            }
+            // fix double linked list
+            if (row && row.next && row.prev) { // fix in the middle
+                const next = this.getRow(d.tableId, row.next);
+                const prev = this.getRow(d.tableId, row.prev);
+                if (next && prev) {
+                    next.prev = prev.id
+                    prev.next = next.id
+                    localStorage.setItem(this.rowKey(d.tableId, prev.id), JSON.stringify(prev))
+                    localStorage.setItem(this.rowKey(d.tableId, next.id), JSON.stringify(next))
+                }
+            } else if (row && row.prev) { // fix last
+                const prev = this.getRow(d.tableId, row.prev);
+                if (prev) {
+                    prev.next = undefined;
+                    localStorage.setItem(this.rowKey(d.tableId, prev.id), JSON.stringify(prev))
+                }
+            } else if (row && row.next) { // fix first
+                const next = this.getRow(d.tableId, row.next);
+                if (next) {
+                    next.prev = undefined;
+                    localStorage.setItem(this.rowKey(d.tableId, next.id), JSON.stringify(next))
+                }
+            }
+            const key = this.rowKey(d.tableId, d.rowId)
+            localStorage.removeItem(key)
+        }
     }
 }
