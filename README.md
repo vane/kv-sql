@@ -56,6 +56,11 @@ alter table customers drop column Address;
 alter table customers add column Address text not null default '';
 ```
 
+drop  
+```sql
+drop table foo;
+```
+
 insert
 ```sql
 insert into artists VALUES (276, 'foo');

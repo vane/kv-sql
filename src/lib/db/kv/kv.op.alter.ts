@@ -29,6 +29,16 @@ export class KvOpAlter {
         this.alterAddData(def, def.cons.pk, col.defaultValue || '');
     }
 
+    dropData(def: KVTableDef) {
+        if (!def.cons.pk.first) return []
+        let row = this.op.store.getRow(def.id, def.cons.pk.first)
+        while (row) {
+            this.op.store.delRow(def.id, row.id)
+            if (!row.next) break
+            row = this.op.store.getRow(def.id, row.next)
+        }
+    }
+
     private alterDropColumns(def: KVTableDef, index: number) {
         for (let key in def.cols) {
             const col = def.cols[key]

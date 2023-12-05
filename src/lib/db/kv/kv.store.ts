@@ -69,7 +69,11 @@ export class KvStore {
         for (let d of this.deleted) {
             const row = this.getRow(d.tableId, d.rowId)
             const t = this.op.table.getId(d.tableId);
-            if (t.cons.pk.first == d.rowId) {
+            if (!t) { // table not found so just delete all rows because we dropped table
+                const key = this.rowKey(d.tableId, d.rowId)
+                localStorage.removeItem(key);
+                continue;
+            } else if (t.cons.pk.first == d.rowId) {
                 t.cons.pk.first = row?.next
             }
             // fix double linked list

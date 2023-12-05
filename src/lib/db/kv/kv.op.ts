@@ -13,6 +13,7 @@ import {selectStmt} from "../stmt/select.stmt";
 import {updateStmt} from "../stmt/update.stmt";
 import {deleteStmt} from "../stmt/delete.stmt";
 import {alterTableStmt} from "../stmt/alter.table.stmt";
+import {dropTableStmt} from "../stmt/drop.table.stmt";
 
 
 export class KvOp {
@@ -64,6 +65,8 @@ export class KvOp {
             }
             case 'alter table':
                 return alterTableStmt(q, this);
+            case 'drop':
+                return dropTableStmt(q, this);
             case 'insert': {
                 return insertStmt(q, this);
             }
@@ -77,7 +80,7 @@ export class KvOp {
                 return deleteStmt(q, this);
             }
             default: {
-                Logger.warn(`Unsupported statement type ${q.variant}`, q)
+                Logger.warn(`KvOp.execute unsupported statement type ${q.variant}`, q)
             }
         }
         return undefined;
